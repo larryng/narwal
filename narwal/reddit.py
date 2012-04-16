@@ -11,7 +11,7 @@ from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD
 
 
 def _login_required(f):
-    '''Decorator which requires to proceed'''
+    """Decorator which requires login to proceed"""
     @wraps(f)
     def wrapper(self, *args, **kwargs):
         if self.logged_in:
@@ -47,6 +47,14 @@ def _process_userlist(userlist):
 
 
 class Reddit(object):
+    """A Reddit session.
+    
+    :param username: (optional) reddit username
+    :param password: (optional) reddit password
+    :param user_agent: User-Agent
+    :param respect: If True, requires user_agent to be specified and limits request rate to 1 every 2 seconds, as per reddit's API rules.
+    :type respect: True or False
+    """
     def __init__(self, username=None, password=None, user_agent=None, respect=True):
         self._modhash = None
         self._cookies = None
@@ -62,11 +70,6 @@ class Reddit(object):
         if username and password:
             self.login(username, password)
     
-    @property
-    def logged_in(self):
-        return bool(self._modhash and self._cookies)
-    
-    
     def _inject_request_kwargs(self, kwargs):
         if self._cookies:
             kwargs.setdefault('cookies', self._cookies)
@@ -75,7 +78,6 @@ class Reddit(object):
         else:
             kwargs.setdefault('headers', {'User-Agent': self._user_agent})
         return kwargs
-    
     
     def _thingify(self, obj, path=None):
         def helper(obj_, dict_):
@@ -98,9 +100,21 @@ class Reddit(object):
             return retval
         
         return recur(obj)
+    
+    @property
+    def logged_in(self):
+        """Property.  True if logged in."""
+        return bool(self._modhash and self._cookies)
             
     @_limit_rate
     def get(self, *args, **kwargs):
+        """Sends a GET request to a reddit path determined by ``args``.  Basically ``.get('foo', 'bar', 'baz')`` will GET http://www.reddit.com/foo/bar/baz/.json.  ``kwargs`` supplied will be passed to ``requests.get`` after having ``user_agent`` and ``cookies`` injected.  Injection only occurs if they don't already exist.
+        
+        Returns :class:`Thing` instance or raises :class:`BadResponse` if not a 200 Response.
+        
+        :param \*args: strings that will form the path to GET
+        :param \*\*kwargs: extra keyword arguments to be passed to ``requests.get``
+        """
         kwargs = self._inject_request_kwargs(kwargs)
         url = relative_url(*args)
         r = requests.get(url, **kwargs)
@@ -113,6 +127,12 @@ class Reddit(object):
     
     @_limit_rate
     def post(self, *args, **kwargs):
+        """Sends a POST request to a reddit path determined by ``args``.  Basically ``.post('foo', 'bar', 'baz')`` will POST http://www.reddit.com/foo/bar/baz/.json.  ``kwargs`` supplied will be passed to ``requests.post`` after having ``modhash`` and ``cookies`` injected, and after having modhash injected into ``kwargs['data']`` if logged in.  Injection only occurs if they don't already exist.
+        Returns :class:`Thing` instance, raises :class:`BadResponse` if not a 200 Response, or raises :class:`POST_ERROR` if a reddit error was returned.
+        
+        :param \*args: strings that will form the path to POST
+        :param \*\*kwargs: extra keyword arguments to be passed to ``requests.POST``
+        """
         kwargs = self._inject_request_kwargs(kwargs)
         if self._modhash:
             if 'data' in kwargs:
@@ -133,6 +153,13 @@ class Reddit(object):
             raise BadResponse(r)
 
     def login(self, username, password):
+        """Logs into reddit with supplied credentials using SSL.
+        
+        API: ``https://ssl.reddit.com/api/login``
+        
+        :param username: reddit username
+        :param password: corresponding reddit password
+        """
         data = dict(user=username, passwd=password, api_type='json')
         r = requests.post(LOGIN_URL, data=data)
         try:
@@ -161,18 +188,52 @@ class Reddit(object):
         return self._limit_get(*args, limit=limit)
     
     def hot(self, sr=None, limit=None):
+        """GETs hot links.  If subreddit is None, gets from main.
+        
+        API: ``http://www.reddit.com/[r/<sr>]/?limit=<limit>``
+        
+        :param sr: subreddit name
+        :param limit: max number of links to get
+        """
         return self._subreddit_get(None, sr, limit)
     
     def new(self, sr=None, limit=None):
+        """GETs new links.  If subreddit is None, gets from main.
+        
+        API: ``http://www.reddit.com/[r/<sr>/]new/?limit=<limit>``
+        
+        :param sr: subreddit name
+        :param limit: max number of links to get"""
         return self._subreddit_get('new', sr, limit)
     
     def top(self, sr=None, limit=None):
+        """GETs top links.  If subreddit is None, gets from main.
+        
+        API: ``http://www.reddit.com/[r/<sr>/]top/?limit=<limit>``
+        
+        :param sr: subreddit name
+        :param limit: max number of links to get
+        """
         return self._subreddit_get('top', sr, limit)
     
     def controversial(self, sr=None, limit=None):
+        """GETs controversial links.  If subreddit is None, gets from main.
+        
+        API: ``http://www.reddit.com/[r/<sr>/]controversial/?limit=<limit>``
+        
+        :param sr: subreddit name
+        :param limit: max number of links to get
+        """
         return self._subreddit_get('controversial', sr, limit)
     
     def comments(self, sr=None, limit=None):
+        """GETs newest comments.  If subreddit is None, gets all.
+        
+        API: ``http://www.reddit.com/[r/<sr>/]comments/?limit=<limit>``
+        
+        :param sr: subreddit name
+        :param limit: max number of comments to get
+        """
         return self._subreddit_get('comments', sr, limit)
     
     def user(self, username):
