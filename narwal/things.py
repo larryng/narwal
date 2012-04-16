@@ -42,8 +42,8 @@ class ListBlob(Blob):
     def __contains__(self, *args, **kwargs):
         return self._items.__contains__(*args, **kwargs)
     
-    def __repr__(self, *args, **kwargs):
-        return self._items.__repr__(*args, **kwargs)
+    #def __repr__(self, *args, **kwargs):
+    #    return self._items.__repr__(*args, **kwargs)
 
 
 class Thing(Blob):
@@ -180,6 +180,9 @@ class Comment(Votable, Created, Commentable):
             return '/{}'.format(r) 
         else:
             return relative_url(r)
+    
+    def reply(self, text):
+        return self.comment(text)
     
     @property
     def permalink(self):

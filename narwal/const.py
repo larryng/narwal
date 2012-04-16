@@ -15,6 +15,7 @@ TYPES = {
 
 KIND_PATTERN = re.compile(r't(?P<type>[0-9]+)(?:_(?P<id>[a-z0-9]+))?')
 COMMENTS_PATH_PATTERN = re.compile(r'(?P<start>.*comments)/(?P<link_id>\w+)/(?P<link_title>\w+)/.*')
-POST_ERROR_PATTERN = re.compile(r'\[\d+, \d+, "call", \["\.(error\.\w+?)"\]\]')
+POST_ERROR_PATTERN = re.compile(r'\[\d+, \d+, "call", \["\.(error\.[^"]+?)"\]\]')
+SUBMIT_RESPONSE_LINK_PATTERN = re.compile(r'\["(http://www.reddit.com/.+?)"\]')
 
 MAX_REPRSTR = 24

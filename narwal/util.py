@@ -23,3 +23,13 @@ def kind(s):
         return TYPES[m.group('type')]
     except:
         return s
+
+def pull_data_dict(lst):
+    for i in lst:
+        if isinstance(i, list):
+            v = pull_data_dict(i)
+            if v:
+                return v
+        elif isinstance(i, dict) and 'data' in i:
+            return i
+    return None

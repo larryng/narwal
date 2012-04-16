@@ -5,9 +5,9 @@ from urlparse import urlparse
 from functools import wraps
 
 from .things import Blob, ListBlob, Account, identify_class
-from .util import relative_url
-from .exceptions import NotLoggedIn, BadResponse, PostError
-from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD
+from .util import relative_url, pull_data_dict
+from .exceptions import NotLoggedIn, BadResponse, PostError, LoginFail
+from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD, SUBMIT_RESPONSE_LINK_PATTERN
 
 
 def _login_required(f):
@@ -118,7 +118,7 @@ class Reddit(object):
         kwargs = self._inject_request_kwargs(kwargs)
         url = relative_url(*args)
         r = requests.get(url, **kwargs)
-        print r.url
+        # print r.url
         if r.status_code == 200:
             thing = self._thingify(json.loads(r.content), path=urlparse(r.url).path)
             return thing
@@ -162,12 +162,15 @@ class Reddit(object):
         """
         data = dict(user=username, passwd=password, api_type='json')
         r = requests.post(LOGIN_URL, data=data)
-        try:
-            j = json.loads(r.content)
-            self._cookies = r.cookies
-            self._modhash = j['json']['data']['modhash']
-            return r
-        except Exception:
+        if r.status_code == 200:
+            try:
+                j = json.loads(r.content)
+                self._cookies = r.cookies
+                self._modhash = j['json']['data']['modhash']
+                return r
+            except Exception:
+                raise LoginFail()
+        else:
             raise BadResponse(r)
     
     # START: Basic getting
@@ -298,17 +301,41 @@ class Reddit(object):
     @_login_required
     def comment(self, parent, text):
         data = dict(parent=parent, text=text)
-        return self.post('api', 'comment', data=data)
+        r = self.post('api', 'comment', data=data)
+        print r.content
+        try:
+            j = json.loads(r.content)
+            data_dict = pull_data_dict(j['jquery'])
+            return self._thingify(data_dict)
+        except Exception:
+            raise BadResponse(r)
     
     @_login_required
-    def submit_link(self, sr, title, url):
-        data = dict(title=title, url=url, sr=sr, kind='link')
-        return self.post('api', 'submit', data=data)
+    def _submit(self, sr, title, kind, url=None, text=None, follow=True):
+        data = dict(title=title, sr=sr, kind=kind)
+        if kind == 'link':
+            data['url'] = url
+        elif kind == 'self':
+            data['text'] = text
+        r = self.post('api', 'submit', data=data)
+        try:
+            m = SUBMIT_RESPONSE_LINK_PATTERN.search(r.content)
+            if follow:
+                r2 = self.get(urlparse(m.group(1)).path)
+                link = r2[0][0]
+                return link
+            else:
+                return m.group(1)
+        except Exception:
+            raise BadResponse(r)
     
     @_login_required
-    def submit_text(self, sr, title, text):
-        data = dict(title=title, text=text, sr=sr, kind='self')
-        return self.post('api', 'submit', data=data)
+    def submit_link(self, sr, title, url, follow=True):
+        return self._submit(sr, title, 'link', url=url, follow=follow)
+    
+    @_login_required
+    def submit_text(self, sr, title, text, follow=True):
+        return self._submit(sr, title, 'self', text=text, follow=follow)
     
     @_login_required
     def save(self, id_):
