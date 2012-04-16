@@ -9,9 +9,9 @@ setup(
     version='0.0.1',
     author='Larry Ng',
     author_email='ng.larry@gmail.com',
-    url='',
+    url='https://github.com/larryng/narwal',
     description='A thin wrapper for the Reddit API.',
-    long_description='',
+    long_description='See https://github.com/larryng/narwal for more info.',
     keywords=['reddit', 'api', 'wrapper'],
     requires=['requests >= 0.11.1'],
     classifiers=[
