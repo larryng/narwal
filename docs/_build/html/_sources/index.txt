@@ -1,18 +1,43 @@
+.. narwal documentation master file, created by
+   sphinx-quickstart on Sun Apr 15 18:30:24 2012.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
 narwal
 ======
 
-narwal (sic) is a Python wrapper for reddit's API made to be simple, intuitive,
-and concise.
+Version |version| (alpha)
 
-Using narwal should be as easy as navigating reddit with a browser.
+narwal (sic) is a Python wrapper for reddit's API made to be simple, intuitive,
+and concise, i.e. *pythonic*. ::
+
+    >>> import narwal
+    >>> session = narwal.connect('narwal_bot', 'hunter2', user_agent='i'm a narw(h)al!')
+    >>> frontpage = session.hot()
+    >>> for link in frontpage[:3]:
+        ...   print link
+        ... 
+        (3088) Words can not describe how much I love this pic of Obama and Clinton
+        (1697) Rough day for a mom at the airport.
+        (1370) I felt awful when this happened.
+    >>> frontpage[1].upvote()
+    <Response [200]>
+    >>> frontpage[1].comment('cool story bro')
+    <Comment [narwal_bot: cool story bro]>
 
 
 Installation
 ------------
 
-To install: ::
+To install, just do the usual: ::
 
     $ pip install narwal
+
+
+API
+---
+
+First, see below for some example usage.  Then, :ref:`here for the API docs <api>`.
 
 
 Examples
@@ -30,29 +55,14 @@ Start a logged in session: ::
 Get the front page: ::
 
     >>> page1 = session.hot()
-    >>> for link in page1:
-    ...   print link
-    ... 
-    (1775) Well, there's one futuristic utopia (NSFW)
-    (1830) I'm no longer a 23 year old virgin! Awww Yeah!!!
-    (2086) The Most Irritating Software in the World
-    ...
 
 Get the next page: ::
 
     >>> page2 = page1.more()
-    >>> print page2
-    [<Link [(966) Please tell me ...]>, <Link [(1100) Chubby arctic ...]>, ...]
 
 Get the fourth link's comments: ::
     
     >>> comments = page1[3].comments()
-    >>> for c in comments[:3]:
-    ...   print c
-    ... 
-    (378) Perryn: [I think he's trying to say something.](http://i.imgur.com/Dq6yJ.jpg)
-    (111) averageUsername123: [WHY ARE THEY SO VIOLENT?!](http://3.bp.blogspot.com/-bhdVeis6-FE/Tb-95L2yRzI/AAAAAAAAAOQ/xlkwBsESdVU/s1600/come-at-me-bro-i-will-turtle-slap-the-shit-out-of-you.jpg)
-    (27) ZoidbergTheThird: That's the cutest fucking turtle I've ever seen.
 
 Get the second link of r/test/top: ::
 

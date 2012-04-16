@@ -12,11 +12,22 @@ def identify_class(dict_):
 
 
 class Blob(object):
+    """A dumb container because ``obj.x`` is cooler then ``obj['x']``.
+    
+    :param reddit: a reddit session
+    :type reddit: :class:`Reddit`
+    """
     def __init__(self, reddit):
         self._reddit = reddit
 
 
 class ListBlob(Blob):
+    """A :class:`Blob` that almost looks and feels like a :class:`list`, but isn't.  Subclasses :class:`Blob`.
+    
+    :param reddit: a reddit session
+    :type reddit: :class:`Reddit`
+    :param items: initial list to absorb
+    """
     def __init__(self, reddit, items=[]):
         super(ListBlob, self).__init__(reddit)
         self._items = items
@@ -47,11 +58,15 @@ class ListBlob(Blob):
 
 
 class Thing(Blob):
+    """A reddit ``Thing``.  See https://github.com/reddit/reddit/wiki/thing for more details.  You will only be seeing instances of subclasses of this.  Subclasses :class:`Blob`
+    
+    `kind` is omitted because it will be implied by :class:`Thing`'s subclasses.
+    `data` is omitted because data will be stored as attributes.
+    """
     def __init__(self, *args, **kwargs):
         self.id = None
         self.name = None
-        self.kind = None
-        self.data = None
+        
         super(Thing, self).__init__(*args, **kwargs)
     
     def __repr__(self):
@@ -66,48 +81,72 @@ class Thing(Blob):
 
 
 class Created(Thing):
+    """An implementation.  Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.created = None
         self.created_utc = None
+        
         super(Created, self).__init__(*args, **kwargs)
 
 
 class Votable(Thing):
+    """An implementation.  Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.ups = None
         self.downs = None
         self.likes = None
+        
         super(Votable, self).__init__(*args, **kwargs)
     
     def vote(self, dir_):
+        """POST a vote on the thing.  Calls :meth:`narwal.Reddit.vote`.
+        
+        :param dir\_: direction (up: 1, down: -1, no vote: 0)
+        """
         return self._reddit.vote(self.name, dir_)
     
     def upvote(self):
+        """Upvote the thing (POST).  Calls :meth:`Votable.vote`."""
         return self.vote(1)
     
     def downvote(self):
+        """Downvote the thing (POST).  Calls :meth:`Votable.vote`."""
         return self.vote(-1)
     
     def unvote(self):
+        """Unvote the thing (POST).  Calls :meth:`Votable.vote`."""
         return self.vote(0)
 
 
 class Commentable(Thing):
+    """Base class for :class:`Thing`s that are commentable (i.e. :class:`Link` and :class:`Comment`).  Subclasses :class:`Thing`.
+    """
     def comment(self, text):
+        """POST a comment to this thing.  Calls :meth:`narwal.Reddit.comment`.
+        
+        :param text: comment's body text
+        """
         return self._reddit.comment(self.name, text)
 
 
 class Listing(ListBlob):
+    """A reddit :class:`Listing`.  Subclasses :class:`ListBlob`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    
+    ``data`` is omitted because data will be stored as attributes.
+    """
     def __init__(self, *args, **kwargs):
         self._limit = None
         self.before = None
         self.after = None
         self.modhash = None
-        self.data = None
+        
         super(Listing, self).__init__(*args, **kwargs)
     
     @property
     def children(self):
+        """Property that aliases ``self.children`` to ``self._items``.  This is done so that :class:`ListBlob` special methods work automagically."""
         return self._items
     
     @children.setter
@@ -124,12 +163,18 @@ class Listing(ListBlob):
     
     @property
     def has_more(self):
+        """Returns True if there are more things that can be retrieved."""
         return bool(self.after or self._has_literally_more())
     
     def more(self, limit=None):
+        """A convenience function.  Calls `self.next_listing`."""
         return self.next_listing(limit=limit)
         
     def next_listing(self, limit=None):
+        """GETs next :class:`Listing` directed to by this :class:`Listing`.  Returns :class:`Listing` object.
+        
+        :param limit: max number of entries to get
+        """
         if self.after:
             return self._reddit._limit_get(self._path, params={'after': self.after}, limit=limit or self._limit)
         elif self._has_literally_more():
@@ -140,6 +185,10 @@ class Listing(ListBlob):
             raise NoMoreError('no more items')
     
     def prev_listing(self, limit=None):
+        """GETs previous :class:`Listing` directed to by this :class:`Listing`.  Returns :class:`Listing` object.
+        
+        :param limit: max number of entries to get
+        """
         if self.before:
             return self._reddit._limit_get(self._path, eparams={'before': self.before}, limit=limit or self._limit)
         else:
@@ -151,6 +200,8 @@ class Userlist(ListBlob):
 
 
 class Comment(Votable, Created, Commentable):
+    """A reddit :class:`Comment`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.author = None
         self.author_flair_css_class = None
@@ -182,23 +233,38 @@ class Comment(Votable, Created, Commentable):
             return relative_url(r)
     
     def reply(self, text):
+        """POSTs a comment in reply to this one.  Calls :meth:`Commentable.comment`.
+        
+        :param text: comment body text
+        """
         return self.comment(text)
     
     @property
     def permalink(self):
+        """Property. Returns permalink."""
         return self._permalink()
     
     def comments(self, limit=None):
+        """GETs comments to this comment.
+        
+        :param limit: max number of comments to return
+        """
         return self._reddit._limit_get(self._permalink(relative=True), limit=limit)[1]
     
     def delete(self):
+        """Deletes this comment (POST).  Calls :meth:`narwal.Reddit.delete`.
+        """
         return self._reddit.delete(self.name)
     
     def remove(self):
+        """Removes this comment (POST).  Calls :meth:`narwal.Reddit.remove`.
+        """
         return self._reddit.remove(self.name)
 
 
 class Link(Votable, Created, Commentable):
+    """A reddit :class:`Link`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.author = None
         self.author_flair_css_class = None
@@ -227,37 +293,61 @@ class Link(Votable, Created, Commentable):
         return u'({}) {}'.format(self.score, self.title)
     
     def comments(self, limit=None):
+        """GETs the comments for this link.
+        
+        :param limit: max number of comments to get 
+        """
         return self._reddit._limit_get(self.permalink, limit=limit)[1]
     
     def save(self):
+        """Saves this link (POST).  Calls :meth:`narwal.Reddit.save`.
+        """
         return self._reddit.save(self.name)
     
     def unsave(self):
+        """Unsaves this link (POST).  Calls :meth:`narwal.Reddit.unsave`.
+        """
         return self._reddit.unsave(self.name)
     
     def hide(self):
+        """Hides this link (POST).  Calls :meth:`narwal.Reddit.hide`.
+        """
         return self._reddit.hide(self.name)
     
     def unhide(self):
+        """Hides this link (POST).  Calls :meth:`narwal.Reddit.unhide`.
+        """
         return self._reddit.unhide(self.name)
     
     def marknsfw(self):
+        """Marks link as nsfw (POST).  Calls :meth:`narwal.Reddit.marknsfw`.
+        """
         return self._reddit.marknsfw(self.name)
     
     def unmarknsfw(self):
+        """Marks link as nsfw (POST).  Calls :meth:`narwal.Reddit.unmarknsfw`.
+        """
         return self._reddit.unmarknsfw(self.name)
     
     def approve(self):
+        """Approves this link (POST).  Calls :meth:`narwal.Reddit.approve`.
+        """
         return self._reddit.approve(self.name)
     
     def remove(self):
+        """Removes this link (POST).  Calls :meth:`narwal.Reddit.remove`.
+        """
         return self._reddit.remove(self.name)
     
     def delete(self):
+        """Deletes this link (POST).  Calls :meth:`narwal.Reddit.delete`.
+        """
         return self._reddit.delete(self.name)
 
 
 class Subreddit(Thing):
+    """A reddit :class:`Submission`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.description = None
         self.display_name = None
@@ -271,40 +361,80 @@ class Subreddit(Thing):
         return u'r/{}'.format(self.display_name)
     
     def hot(self, limit=None):
+        """GETs hot links from this subreddit.  Calls :meth:`narwal.Reddit.hot`.
+        
+        :param limit: max number of links to return
+        """
         return self._reddit.hot(self.display_name, limit=limit)
     
     def new(self, limit=None):
+        """GETs new links from this subreddit.  Calls :meth:`narwal.Reddit.new`.
+        
+        :param limit: max number of links to return
+        """
         return self._reddit.new(self.display_name, limit=limit)
     
     def top(self, limit=None):
+        """GETs top links from this subreddit.  Calls :meth:`narwal.Reddit.top`.
+        
+        :param limit: max number of links to return
+        """
         return self._reddit.top(self.display_name, limit=limit)
     
     def controversial(self, limit=None):
+        """GETs controversial links from this subreddit.  Calls :meth:`narwal.Reddit.controversial`.
+        
+        :param limit: max number of links to return
+        """
         return self._reddit.controversial(self.display_name, limit=limit)
     
     def comments(self, limit=None):
+        """GETs newest comments from this subreddit.  Calls :meth:`narwal.Reddit.comments`.
+        
+        :param limit: max number of links to return
+        """
         return self._reddit.comments(self.display_name, limit=limit)
     
     def subscribe(self):
+        """Subscribe to this subreddit (POST).  Calls :meth:`narwal.Reddit.subscribe`.
+        """
         return self._reddit.subscribe(self.name)
     
     def unsubscribe(self):
+        """Unsubscribe to this subreddit (POST).  Calls :meth:`narwal.Reddit.unsubscribe`.
+        """
         return self._reddit.unsubscribe(self.name)
     
     def submit_link(self, title, url):
+        """Submit link to this subreddit (POST).  Calls :meth:`narwal.Reddit.submit_link`.
+        
+        :param title: title of submission
+        :param url: url submission links to
+        """
         return self._reddit.submit_link(self.display_name, title, url)
     
     def submit_text(self, title, text):
+        """Submit self text submission to this subreddit (POST).  Calls :meth:`narwal.Reddit.submit_text`.
+        
+        :param title: title of submission
+        :param text: self text
+        """
         return self._reddit.submit_text(self.display_name, title, text)
     
     def moderators(self):
+        """GETs moderators for this subreddit.  Calls :meth:`narwal.Reddit.moderators`.
+        """
         return self._reddit.moderators(self.display_name)
     
     def contributors(self):
+        """GETs contributors for this subreddit.  Calls :meth:`narwal.Reddit.contributors`.
+        """
         return self._reddit.contributors(self.display_name)
 
 
 class Message(Created):
+    """A reddit :class:`Message`. Subclasses :class:`Created`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.author = None
         self.body = None
@@ -326,18 +456,32 @@ class Message(Created):
                                 self.body.replace('\n', ' ')) 
     
     def read(self):
+        """Marks message as read (POST).  Calls :meth:`narwal.Reddit.read_message`.
+        """
         return self._reddit.read_message(self.name)
     
     def unread(self):
+        """Marks message as unread (POST).  Calls :meth:`narwal.Reddit.unread_message`.
+        """
         return self._reddit.unread_message(self.name)
     
     def hide(self):
+        """Hides message (POST).  Calls :meth:`narwal.Reddit.hide_message`.
+        """
         return self._reddit.hide_message(self.name)
     
     def unhide(self):
+        """Unhides message (POST).  Calls :meth:`narwal.Reddit.unhide_message`.
+        """
         return self._reddit.unhide_message(self.name)
     
     def reply(self, text):
+        """POSTs reply to message with own message.
+        
+        URL: ``http://www.reddit.com/api/comment/``
+        
+        :param text: body text of message
+        """
         data = {
             'thing_id': self.name,
             'id': '#commentreply_{}'.format(self.name),
@@ -346,10 +490,14 @@ class Message(Created):
         return self._reddit.post('api', 'comment', data=data)
     
     def report(self):
+        """Reports message (POST).  Calls :meth:`narwal.Reddit.report`.
+        """
         return self._reddit.report(self.name)
 
 
 class Account(Thing):
+    """A reddit :class:`Account`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.comment_karma = None
         self.created = None
@@ -368,28 +516,42 @@ class Account(Thing):
         return unicode(self.name)
     
     def overview(self):
+        """GETs overview of user's activities.  Returns :class:`Listing`.
+        
+        URL: http://www.reddit.com/user/<self.name>/overview/
+        """
         return self._reddit.get('user', self.name, 'overview')
     
     def comments(self, limit=None):
-        return self._reddit._limit_get('user', self.name, 'comments', limit=limit)
+        """GETs user's comments.  Calls :meth:`narwal.Reddit.user_comments`.
+        
+        :param limit: max number of comments to get
+        """
+        return self._reddit.user_comments(self.name, limit=limit)
     
     def submitted(self, limit=None):
+        """GETs user's submissions.  Calls :meth:`narwal.Reddit.user_comments`.
+        
+        :param limit: max number of submissions to get
+        """
         return self._reddit._limit_get('user', self.name, 'submitted', limit=limit)
     
-    def liked(self, limit=None):
-        return self._reddit._limit_get('user', self.name, 'liked', limit=limit)
-    
-    def disliked(self, limit=None):
-        return self._reddit._limit_get('user', self.name, 'disliked', limit=limit)
-    
-    def hidden(self, limit=None):
-        return self._reddit._limit_get('user', self.name, 'hidden', limit=limit)
-    
     def about(self):
-        return self._reddit.get('user', self.name, 'about')
-
+        """GETs this user (again).  Calls :meth:`narwal.Reddit.user`.
+        """
+        return self._reddit.user(self.name)
+    
+    def message(self, subject, text):
+        """Compose a message to this user.  Calls :meth:`narwal.Reddit.compose`.
+        
+        :param subject: subject of message
+        :param text: body of message
+        """
+        return self._reddit.compose(self.name, subject, text)
 
 class More(Thing):
+    """A reddit :class:`More`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """
     def __init__(self, *args, **kwargs):
         self.children = None
         super(More, self).__init__(*args, **kwargs)

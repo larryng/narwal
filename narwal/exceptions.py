@@ -14,12 +14,14 @@ class UnsupportedError(AlienException):
     '''Currently unsupported API feature'''
 
 class PostError(AlienException):
+    """Response contained reddit errors in response."""
     def __init__(self, errors):
         plural = 's' if len(errors) > 1 else ''
         super(PostError, self).__init__('error{} returned: {}'.format(plural, ', '.join(errors)))
         self.errors = errors
 
 class BadResponse(AlienException):
+    """A non-200 response, or a 200 response with non-OK content received.""" 
     def __init__(self, response):
         super(BadResponse, self).__init__('{} received'.format(response.status_code))
         self.response = response
