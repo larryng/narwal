@@ -1,0 +1,9 @@
+test.py
+.git
+.project
+.pydevproject
+.settings
+*.pyc
+dist
+narwal.egg-info
+build
