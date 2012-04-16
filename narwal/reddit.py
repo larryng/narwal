@@ -10,30 +10,6 @@ from .exceptions import NotLoggedIn, BadResponse, PostError, LoginFail
 from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD, SUBMIT_RESPONSE_LINK_PATTERN
 
 
-def _login_required(f):
-    """Decorator which requires login to proceed"""
-    @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        if self.logged_in:
-            return f(self, *args, **kwargs)
-        else:
-            raise NotLoggedIn()
-    return wrapper
-
-    
-def _limit_rate(f):
-    @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        if self._respect and self._last_request_time:
-            elapsed = time.time() - self._last_request_time
-            diff = API_PERIOD - elapsed
-            if diff > 0:
-                time.sleep(diff)
-        self._last_request_time = time.time()
-        return f(self, *args, **kwargs)
-    return wrapper
-
-
 def _process_userlist(userlist):
     r = userlist.children
     items = []
@@ -60,7 +36,6 @@ class Reddit(object):
         self._cookies = None
         self._respect = respect
         self._last_request_time = None
-        self._me = None
         
         if respect and not user_agent:
             raise ValueError('must specify user_agent to respect reddit rules')
@@ -69,6 +44,27 @@ class Reddit(object):
         
         if username and password:
             self.login(username, password)
+    
+    def _login_required(f):
+        @wraps(f)
+        def wrapper(self, *args, **kwargs):
+            if self.logged_in:
+                return f(self, *args, **kwargs)
+            else:
+                raise NotLoggedIn()
+        return wrapper
+    
+    def _limit_rate(f):
+        @wraps(f)
+        def wrapper(self, *args, **kwargs):
+            if self._respect and self._last_request_time:
+                elapsed = time.time() - self._last_request_time
+                diff = API_PERIOD - elapsed
+                if diff > 0:
+                    time.sleep(diff)
+            self._last_request_time = time.time()
+            return f(self, *args, **kwargs)
+        return wrapper
     
     def _inject_request_kwargs(self, kwargs):
         if self._cookies:
@@ -110,7 +106,7 @@ class Reddit(object):
     def get(self, *args, **kwargs):
         """Sends a GET request to a reddit path determined by ``args``.  Basically ``.get('foo', 'bar', 'baz')`` will GET http://www.reddit.com/foo/bar/baz/.json.  ``kwargs`` supplied will be passed to ``requests.get`` after having ``user_agent`` and ``cookies`` injected.  Injection only occurs if they don't already exist.
         
-        Returns :class:`Thing` instance or raises :class:`BadResponse` if not a 200 Response.
+        Returns :class:`Blob` object or a subclass of :class:`Blob`, or raises :class:`BadResponse` if not a 200 Response.
         
         :param \*args: strings that will form the path to GET
         :param \*\*kwargs: extra keyword arguments to be passed to ``requests.get``
@@ -128,7 +124,8 @@ class Reddit(object):
     @_limit_rate
     def post(self, *args, **kwargs):
         """Sends a POST request to a reddit path determined by ``args``.  Basically ``.post('foo', 'bar', 'baz')`` will POST http://www.reddit.com/foo/bar/baz/.json.  ``kwargs`` supplied will be passed to ``requests.post`` after having ``modhash`` and ``cookies`` injected, and after having modhash injected into ``kwargs['data']`` if logged in.  Injection only occurs if they don't already exist.
-        Returns :class:`Thing` instance, raises :class:`BadResponse` if not a 200 Response, or raises :class:`POST_ERROR` if a reddit error was returned.
+        
+        Returns :class:`requests.Response` object, raises :class:`BadResponse` if not a 200 Response, or raises :class:`POST_ERROR` if a reddit error was returned.
         
         :param \*args: strings that will form the path to POST
         :param \*\*kwargs: extra keyword arguments to be passed to ``requests.POST``
@@ -153,9 +150,9 @@ class Reddit(object):
             raise BadResponse(r)
 
     def login(self, username, password):
-        """Logs into reddit with supplied credentials using SSL.
+        """Logs into reddit with supplied credentials using SSL.  Returns :class:`requests.Response` object, or raises :class:`LoginFail` or :class:`BadResponse`.
         
-        API: ``https://ssl.reddit.com/api/login``
+        URL: ``https://ssl.reddit.com/api/login``
         
         :param username: reddit username
         :param password: corresponding reddit password
@@ -191,48 +188,49 @@ class Reddit(object):
         return self._limit_get(*args, limit=limit)
     
     def hot(self, sr=None, limit=None):
-        """GETs hot links.  If subreddit is None, gets from main.
+        """GETs hot links.  If sr is None, gets from main.  Returns :class:`Listing` object.
         
-        API: ``http://www.reddit.com/[r/<sr>]/?limit=<limit>``
+        URL: ``http://www.reddit.com/[r/<sr>]/?limit=<limit>``
         
         :param sr: subreddit name
-        :param limit: max number of links to get
+        :param limit: max number of submissions to get
         """
         return self._subreddit_get(None, sr, limit)
     
     def new(self, sr=None, limit=None):
-        """GETs new links.  If subreddit is None, gets from main.
+        """GETs new links.  If sr is None, gets from main.  Returns :class:`Listing` object.
         
-        API: ``http://www.reddit.com/[r/<sr>/]new/?limit=<limit>``
+        URL: ``http://www.reddit.com/[r/<sr>/]new/?limit=<limit>``
         
         :param sr: subreddit name
-        :param limit: max number of links to get"""
+        :param limit: max number of submissions to get
+        """
         return self._subreddit_get('new', sr, limit)
     
     def top(self, sr=None, limit=None):
-        """GETs top links.  If subreddit is None, gets from main.
+        """GETs top links.  If sr is None, gets from main.  Returns :class:`Listing` object.
         
-        API: ``http://www.reddit.com/[r/<sr>/]top/?limit=<limit>``
+        URL: ``http://www.reddit.com/[r/<sr>/]top/?limit=<limit>``
         
         :param sr: subreddit name
-        :param limit: max number of links to get
+        :param limit: max number of submissions to get
         """
         return self._subreddit_get('top', sr, limit)
     
     def controversial(self, sr=None, limit=None):
-        """GETs controversial links.  If subreddit is None, gets from main.
+        """GETs controversial links.  If sr is None, gets from main.  Returns :class:`Listing` object.
         
-        API: ``http://www.reddit.com/[r/<sr>/]controversial/?limit=<limit>``
+        URL: ``http://www.reddit.com/[r/<sr>/]controversial/?limit=<limit>``
         
         :param sr: subreddit name
-        :param limit: max number of links to get
+        :param limit: max number of submissions to get
         """
         return self._subreddit_get('controversial', sr, limit)
     
     def comments(self, sr=None, limit=None):
-        """GETs newest comments.  If subreddit is None, gets all.
+        """GETs newest comments.  If sr is None, gets all.  Returns :class:`Listing` object.
         
-        API: ``http://www.reddit.com/[r/<sr>/]comments/?limit=<limit>``
+        URL: ``http://www.reddit.com/[r/<sr>/]comments/?limit=<limit>``
         
         :param sr: subreddit name
         :param limit: max number of comments to get
@@ -240,36 +238,77 @@ class Reddit(object):
         return self._subreddit_get('comments', sr, limit)
     
     def user(self, username):
+        """GETs user info.  Returns :class:`Account` object.
+        
+        URL: ``http://www.reddit.com/user/<username>/about/``
+        
+        :param username: username of user to get info
+        """
         return self.get('user', username, 'about')
     
-    def subreddit(self, name):
-        return self.get('r', name, 'about')
+    def subreddit(self, sr):
+        """GETs subreddit info.  Returns :class:`Subreddit` object.
+        
+        URL: ``http://www.reddit.com/r/<sr>/about/``
+        
+        :param sr: subreddit name
+        """
+        return self.get('r', sr, 'about')
     
     def info(self, url):
+        """GETs info about ``url``.  See ``https://github.com/reddit/reddit/wiki/API%3A-info.json``.
+        
+        URL: ``http://www.reddit.com/api/info/?url=<url>``
+        
+        :param url: url
+        """
         return self.get('api', 'info', params=dict(url=url))
     
     def search(self, query, limit=None):
+        """Use reddit's search function.  Returns :class:`Listing` object.
+        
+        URL: ``http://www.reddit.com/search/?q=<query>&limit=<limit>``
+        
+        :param query: query string
+        :param limit: max number of results to get
+        """
         return self._limit_get('search', params=dict(q=query), limit=limit)
     
     def domain(self, domain_, limit=None):
+        """GETs links from ``domain_``.  Returns :class:`Listing` object.
+        
+        URL: ``http://www.reddit.com/domain/?domain=<domain_>&limit=<limit>``
+        
+        :param domain: the domain, e.g. ``google.com``
+        :param limit: max number of links to get
+        """
         return self._limit_get('domain', domain_, limit=limit)
     
     @_login_required
-    def me(self, refresh=False):
-        if not self._me or refresh:
-            r = self.get('api', 'me')
-            if issubclass(type(r), Blob):
-                self._me = r
-                self._modhash = r.modhash
-            else:
-                raise BadResponse(r)
-        return self._me
+    def me(self):
+        """GETs info about logged in user.  Returns :class:`Account` object.
+        
+        URL: ``http://www.reddit.com/api/me/``
+        """
+        return self.get('api', 'me')
     
     @_login_required
     def mine(self, limit=None):
+        """GETs logged in user's subscribed subreddits.  Returns :class:`Listing` object.
+        
+        URL: ``http://www.reddit.com/reddits/mine?limit=<limit>``
+        
+        :param limit: max number of subreddits to get
+        """
         return self._limit_get('reddits', 'mine', limit=limit)
     
     def moderators(self, sr):
+        """GETs moderators of subreddit ``sr``.  Returns :class:`ListBlob` object.
+        
+        URL: ``http://www.reddit.com/r/<sr>/about/moderators/``
+        
+        :param sr: name of subreddit
+        """
         userlist = self.get('r', sr, 'about', 'moderators')
         return _process_userlist(userlist)
     
@@ -279,27 +318,75 @@ class Reddit(object):
     
     @_login_required
     def saved(self, limit=None):
+        """GETs logged in user's saved submissions.  Returns :class:`Listing` object.
+        
+        URL: ``http://www.reddit.com/saved/``
+        
+        :param limit: max number of submissions to get
+        """
         return self._limit_get('saved', limit=limit)
     
     @_login_required
     def vote(self, id_, dir_):
+        """POSTs a vote.  Returns :class:`requests.Response` object.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-vote``.
+        
+        URL: ``http://www.reddit.com/api/vote/``
+        
+        :param id_: full id of object voting on
+        :param dir_: direction of vote (1, 0, or -1)
+        """
         data = dict(id=id_, dir=dir_)
         return self.post('api', 'vote', data=data)
     
     @_login_required
     def upvote(self, id_):
+        """POSTs an upvote (1).  Returns :class:`requests.Response` object.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-vote``.
+        
+        URL: ``http://www.reddit.com/api/vote/``
+        
+        :param id_: full id of object voting on
+        """
         return self.vote(id_, 1)
     
     @_login_required
     def downvote(self, id_):
+        """POSTs a downvote (-1).  Returns :class:`requests.Response` object.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-vote``.
+        
+        URL: ``http://www.reddit.com/api/vote/``
+        
+        :param id_: full id of object voting on
+        """
         return self.vote(id_, -1)
     
     @_login_required
     def unvote(self, id_):
+        """POSTs a null vote (0).  Returns :class:`requests.Response` object.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-vote``.
+        
+        URL: ``http://www.reddit.com/api/vote/``
+        
+        :param id_: full id of object voting on
+        """
         return self.vote(id_, 0)
     
     @_login_required
     def comment(self, parent, text):
+        """POSTs a comment in response to ``parent``.  Returns :class:`Comment` object
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-comment``.
+        
+        URL: ``http://www.reddit.com/api/comment/``
+        
+        :param parent: full id of thing commenting on
+        :param text: comment text
+        """
         data = dict(parent=parent, text=text)
         r = self.post('api', 'comment', data=data)
         print r.content
@@ -331,10 +418,38 @@ class Reddit(object):
     
     @_login_required
     def submit_link(self, sr, title, url, follow=True):
+        """POSTs a link submission.  Returns :class:`Link` object if ``follow=True`` (default), or the string permalink of the new submission otherwise.
+        
+        Argument ``follow`` exists because reddit only returns the permalink after POSTing a submission.  In order to get detailed info on the new submission, we need to make another request.  If you don't want to make that additional request, just set ``follow=False``.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-submit``.
+        
+        URL: ``http://www.reddit.com/api/submit/``
+        
+        :param sr: name of subreddit to submit to
+        :param title: title of submission
+        :param url: submission link
+        :param follow: set to ``True`` to follow retrieved permalink to return detailed :class:`Link` object.  ``False`` to just return permalink.
+        :type follow: bool
+        """
         return self._submit(sr, title, 'link', url=url, follow=follow)
     
     @_login_required
     def submit_text(self, sr, title, text, follow=True):
+        """POSTs a text submission.  Returns :class:`Link` object if ``follow=True`` (default), or the string permalink of the new submission otherwise.
+        
+        Argument ``follow`` exists because reddit only returns the permalink after POSTing a submission.  In order to get detailed info on the new submission, we need to make another request.  If you don't want to make that additional request, set ``follow=False``.
+        
+        See ``https://github.com/reddit/reddit/wiki/API%3A-submit``.
+        
+        URL: ``http://www.reddit.com/api/submit/``
+        
+        :param sr: name of subreddit to submit to
+        :param title: title of submission
+        :param text: submission self text
+        :param follow: set to ``True`` to follow retrieved permalink to return detailed :class:`Link` object.  ``False`` to just return permalink.
+        :type follow: bool
+        """
         return self._submit(sr, title, 'self', text=text, follow=follow)
     
     @_login_required
@@ -497,7 +612,7 @@ class Reddit(object):
         return _process_userlist(userlist)
     
     # END: Mod actions
-    
+
 
 def connect(*args, **kwargs):
     return Reddit(*args, **kwargs)

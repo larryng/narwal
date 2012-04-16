@@ -20,10 +20,20 @@ To install: ::
 Examples (until better docs are written)
 ----------------------------------------
 
-Start a session and get the front page, and the next: ::
+
+Start a session: ::
 
     >>> import narwal
     >>> session = narwal.connect(user_agent='narwal demo')
+
+
+Start a logged in session: ::
+
+    >>> session = narwal.connect('narwal_bot', 'password', user_agent='narwal demo')
+
+
+Get the front page: ::
+
     >>> page1 = session.hot()
     >>> for link in page1:
     ...   print link
@@ -32,6 +42,10 @@ Start a session and get the front page, and the next: ::
     (1830) I'm no longer a 23 year old virgin! Awww Yeah!!!
     (2086) The Most Irritating Software in the World
     ...
+
+
+Get the next page: ::
+
     >>> page2 = page1.more()
     >>> print page2
     [<Link [(966) Please tell me ...]>, <Link [(1100) Chubby arctic ...]>, ...]
@@ -48,28 +62,41 @@ Get the fourth link's comments: ::
     (27) ZoidbergTheThird: That's the cutest fucking turtle I've ever seen.
 
 
-Log in and comment on second link of r/test/top, downvote it, then reply to it: ::
+Get the second link of r/test/top: ::
 
-    >>> session.login('narwal_bot', 'password')
     >>> link = session.top('test')[1]
+
+
+Submit a comment to it: ::
+
     >>> comment = link.comment('the narwhal ba--')
+
+
+Downvote the comment we just submitted: ::
+
     >>> comment.downvote()
     <Response [200]>
+    
+
+And reply to it: ::
+
     >>> comment.reply('NO! *slap*')
     <Comment [(1) narwal_bot: NO! *slap*]>
 
 
-Check inbox, read first unread message, get sender's account info and 
-submissions: ::
+Check our inbox: ::
 
     >>> inbox = session.inbox()
-    >>> len(inbox)
-    3
+
+
+Read the first message: ::
+
     >>> print inbox[0]
     larryng: hi there
+
+
+Get the sender's account info and submissions: ::
     >>> user = session.user(message.author)
-    >>> user
-    <Account [larryng]>
     >>> user.submitted()
     [<Link [(1) test post please ...]>]
 
