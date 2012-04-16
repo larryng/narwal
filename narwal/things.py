@@ -121,7 +121,7 @@ class Votable(Thing):
 
 
 class Commentable(Thing):
-    """Base class for :class:`Thing`s that are commentable (i.e. :class:`Link` and :class:`Comment`).  Subclasses :class:`Thing`.
+    """Base class for :class:`Thing` objects that are commentable (i.e. :class:`Link` and :class:`Comment`).  Subclasses :class:`Thing`.
     """
     def comment(self, text):
         """POST a comment to this thing.  Calls :meth:`narwal.Reddit.comment`.
