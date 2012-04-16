@@ -1,7 +1,7 @@
 .. _api:
 
 narwal's API
-==========
+============
 
 .. module:: narwal
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>narwal’s API &mdash; narwal 0.0.1a documentation</title>
+    <title>narwal’s API &mdash; narwal 0.1.0a documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.0.1a',
+        VERSION:     '0.1.0a',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="narwal 0.0.1a documentation" href="index.html" /> 
+    <link rel="top" title="narwal 0.1.0a documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">narwal 0.0.1a documentation</a> &raquo;</li> 
+        <li><a href="index.html">narwal 0.1.0a documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,9 +46,9 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="narwal-s-api">
-<span id="api"></span><h1>narwal&#8217;s API<a class="headerlink" href="#narwal-s-api" title="Permalink to this headline">¶</a></h1>
-<span class="target" id="module-narwal"></span><p>You&#8217;ll always be starting with <a class="reference internal" href="#narwal.Reddit" title="narwal.Reddit"><tt class="xref py py-class docutils literal"><span class="pre">Reddit</span></tt></a>, by invoking either:</p>
+  <div class="section" id="module-narwal">
+<span id="narwal-s-api"></span><span id="api"></span><h1>narwal&#8217;s API<a class="headerlink" href="#module-narwal" title="Permalink to this headline">¶</a></h1>
+<p>You&#8217;ll always be starting with <a class="reference internal" href="#narwal.Reddit" title="narwal.Reddit"><tt class="xref py py-class docutils literal"><span class="pre">Reddit</span></tt></a>, by invoking either:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">narwal</span><span class="o">.</span><span class="n">Reddit</span><span class="p">(</span><span class="n">user_agent</span><span class="o">=</span><span class="s">&#39;hellonarwal&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">narwal</span><span class="o">.</span><span class="n">Reddit</span><span class="p">(</span><span class="s">&#39;username&#39;</span><span class="p">,</span> <span class="s">&#39;password&#39;</span><span class="p">,</span> <span class="n">user_agent</span><span class="o">=</span><span class="s">&#39;nice2meetu&#39;</span><span class="p">)</span>
 </pre></div>
@@ -1637,6 +1637,12 @@ them are accessible through things&#8217; methods for convenience.</p>
 <dt id="narwal.exceptions.BadResponse">
 <em class="property">exception </em><tt class="descclassname">narwal.exceptions.</tt><tt class="descname">BadResponse</tt><big>(</big><em>response</em><big>)</big><a class="headerlink" href="#narwal.exceptions.BadResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>A non-200 response, or a 200 response with non-OK content received.</p>
+<dl class="attribute">
+<dt id="narwal.exceptions.BadResponse.response">
+<tt class="descname">response</tt><em class="property"> = None</em><a class="headerlink" href="#narwal.exceptions.BadResponse.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>the <tt class="xref py py-class docutils literal"><span class="pre">requests.Response</span></tt> object returned</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="exception">
@@ -1661,6 +1667,12 @@ them are accessible through things&#8217; methods for convenience.</p>
 <dt id="narwal.exceptions.PostError">
 <em class="property">exception </em><tt class="descclassname">narwal.exceptions.</tt><tt class="descname">PostError</tt><big>(</big><em>errors</em><big>)</big><a class="headerlink" href="#narwal.exceptions.PostError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Response contained reddit errors in response.</p>
+<dl class="attribute">
+<dt id="narwal.exceptions.PostError.errors">
+<tt class="descname">errors</tt><em class="property"> = None</em><a class="headerlink" href="#narwal.exceptions.PostError.errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of string reddit errors received in response</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="exception">
@@ -1719,7 +1731,7 @@ them are accessible through things&#8217; methods for convenience.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">narwal 0.0.1a documentation</a> &raquo;</li> 
+        <li><a href="index.html">narwal 0.1.0a documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
