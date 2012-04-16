@@ -96,6 +96,7 @@ Read the first message: ::
 
 
 Get the sender's account info and submissions: ::
+
     >>> user = session.user(message.author)
     >>> user.submitted()
     [<Link [(1) test post please ...]>]
