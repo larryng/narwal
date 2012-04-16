@@ -6,7 +6,7 @@ from setuptools import setup
 setup(
     name='narwal',
     packages=['narwal'],
-    version='0.1.0a',
+    version='0.1.1a',
     author='Larry Ng',
     author_email='ng.larry@gmail.com',
     url='https://github.com/larryng/narwal',
