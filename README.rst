@@ -20,6 +20,8 @@ and concise, i.e. *pythonic*. ::
 
 See the docs at http://narwal.readthedocs.org/.
 
+**Note:** narwal has so far only been tested in Python 2.7.
+
 
 Installation
 ------------
