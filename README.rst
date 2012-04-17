@@ -5,7 +5,7 @@ narwal (sic) is a Python wrapper for reddit's API made to be simple, intuitive,
 and concise, i.e. *pythonic*. ::
 
     >>> import narwal
-    >>> session = narwal.connect('narwal_bot', 'hunter2', user_agent='i'm a narw(h)al!')
+    >>> session = narwal.connect('narwal_bot', 'hunter2', user_agent="i'm a narw(h)al!")
     >>> frontpage = session.hot()
     >>> for link in frontpage[:3]:
         ...   print link
