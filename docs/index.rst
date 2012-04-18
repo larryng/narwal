@@ -6,7 +6,7 @@
 narwal
 ======
 
-Version |version| (alpha)
+Version |version| (alpha).
 
 narwal (sic) is a Python wrapper for reddit's API made to be simple, intuitive,
 and concise, i.e. *pythonic*. ::
@@ -24,6 +24,10 @@ and concise, i.e. *pythonic*. ::
     <Response [200]>
     >>> frontpage[1].comment('cool story bro')
     <Comment [narwal_bot: cool story bro]>
+
+Currently works with Python 2.7.  See the 
+`source on github <https://github.com/larryng/narwal/>`_.  Written by Larry Ng
+and released under the ISC License.
 
 
 Installation
