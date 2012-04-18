@@ -1,12 +1,14 @@
 .. _api:
 
-narwal's API
-============
-
-.. module:: narwal
+Usage and API
+=============
 
 
-You'll always be starting with :class:`Reddit`, by invoking either: ::
+After importing narwal, ::
+
+    >>> import narwal
+
+you'll always be starting with :class:`Reddit`, by invoking either: ::
 
     >>> session = narwal.Reddit(user_agent='hellonarwal')
     >>> session = narwal.Reddit('username', 'password', user_agent='nice2meetu')
@@ -58,21 +60,25 @@ them are accessible through things' methods for convenience.
 narwal
 ------
 
+.. module:: narwal
+
 .. autofunction:: connect
 
 .. autoclass:: Reddit
    :members:
 
 
-things
-------
+narwal.things
+-------------
 
 .. automodule:: narwal.things
    :members:
+   :show-inheritance:
 
 
-exceptions
-----------
+narwal.exceptions
+-----------------
 
 .. automodule:: narwal.exceptions
    :members:
+   :show-inheritance:

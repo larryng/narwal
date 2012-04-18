@@ -22,7 +22,7 @@ class Blob(object):
 
 
 class ListBlob(Blob):
-    """A :class:`Blob` that almost looks and feels like a :class:`list`, but isn't.  Subclasses :class:`Blob`.
+    """A :class:`Blob` that almost looks and feels like a :class:`list`, but isn't.
     
     :param reddit: a reddit session
     :type reddit: :class:`Reddit`
@@ -58,7 +58,7 @@ class ListBlob(Blob):
 
 
 class Thing(Blob):
-    """A reddit ``Thing``.  See https://github.com/reddit/reddit/wiki/thing for more details.  You will only be seeing instances of subclasses of this.  Subclasses :class:`Blob`
+    """A reddit ``Thing``.  See https://github.com/reddit/reddit/wiki/thing for more details.  You will only be seeing instances of subclasses of this.
     
     `kind` is omitted because it will be implied by :class:`Thing`'s subclasses.
     `data` is omitted because data will be stored as attributes.
@@ -81,7 +81,7 @@ class Thing(Blob):
 
 
 class Created(Thing):
-    """An implementation.  Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """An implementation.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.created = None
@@ -91,7 +91,7 @@ class Created(Thing):
 
 
 class Votable(Thing):
-    """An implementation.  Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """An implementation.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.ups = None
@@ -121,7 +121,7 @@ class Votable(Thing):
 
 
 class Commentable(Thing):
-    """Base class for :class:`Thing` objects that are commentable (i.e. :class:`Link` and :class:`Comment`).  Subclasses :class:`Thing`.
+    """Base class for :class:`Thing` objects that are commentable (i.e. :class:`Link` and :class:`Comment`).
     """
     def comment(self, text):
         """POST a comment to this thing.  Calls :meth:`narwal.Reddit.comment`.
@@ -151,19 +151,19 @@ class Commentable(Thing):
         """
         return self._reddit.distinguish(self.name, how)
     
-    def remove(self):
-        """Removes this thing (POST).  Calls :meth:`narwal.Reddit.remove`.
-        """
-        return self._reddit.remove(self.name)
-    
     def delete(self):
         """Deletes this thing (POST).  Calls :meth:`narwal.Reddit.delete`.
         """
         return self._reddit.delete(self.name)
+    
+    def remove(self):
+        """Removes this thing (POST).  Calls :meth:`narwal.Reddit.remove`.
+        """
+        return self._reddit.remove(self.name)
 
 
 class Hideable(Thing):
-    """Base class for :class:`Thing` objects that are hideable (i.e. :class:`Link` and :class:`Message`).  Subclasses :class:`Thing`.
+    """Base class for :class:`Thing` objects that are hideable (i.e. :class:`Link` and :class:`Message`).
     """
     def hide(self):
         """Hides this thing (POST).  Calls :meth:`narwal.Reddit.hide`.
@@ -177,7 +177,7 @@ class Hideable(Thing):
 
 
 class Reportable(Thing):
-    """Base class for :class:`Thing` objects that are reportable (i.e. :class:`Link`, :class:`Comment`, and :class:`Message`).  Subclasses :class:`Thing`.
+    """Base class for :class:`Thing` objects that are reportable (i.e. :class:`Link`, :class:`Comment`, and :class:`Message`).
     """
     def report(self):
         """Reports this thing (POST).  Calls :meth:`narwal.Reddit.report`.
@@ -185,7 +185,7 @@ class Reportable(Thing):
         return self._reddit.report(self.name)
 
 class Listing(ListBlob):
-    """A reddit :class:`Listing`.  Subclasses :class:`ListBlob`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Listing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     
     ``data`` is omitted because data will be stored as attributes.
     """
@@ -253,7 +253,7 @@ class Userlist(ListBlob):
 
 
 class Comment(Votable, Created, Commentable, Reportable):
-    """A reddit :class:`Comment`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Comment`. See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.author = None
@@ -285,21 +285,21 @@ class Comment(Votable, Created, Commentable, Reportable):
         else:
             return relative_url(r)
     
+    @property
+    def permalink(self):
+        """Property. Returns permalink as relative path."""
+        return self._permalink()
+    
     def reply(self, text):
         """POSTs a comment in reply to this one.  Calls :meth:`Commentable.comment`.
         
         :param text: comment body text
         """
         return self.comment(text)
-    
-    @property
-    def permalink(self):
-        """Property. Returns permalink as relative path."""
-        return self._permalink()
 
 
 class Link(Votable, Created, Commentable, Hideable, Reportable):
-    """A reddit :class:`Link`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Link`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.author = None
@@ -355,7 +355,7 @@ class Link(Votable, Created, Commentable, Hideable, Reportable):
 
 
 class Subreddit(Thing):
-    """A reddit :class:`Submission`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Submission`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.description = None
@@ -442,7 +442,7 @@ class Subreddit(Thing):
 
 
 class Message(Created, Hideable, Reportable):
-    """A reddit :class:`Message`. Subclasses :class:`Created`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Message`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.author = None
@@ -490,7 +490,7 @@ class Message(Created, Hideable, Reportable):
 
 
 class Account(Thing):
-    """A reddit :class:`Account`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`Account`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.comment_karma = None
@@ -544,7 +544,7 @@ class Account(Thing):
         return self._reddit.compose(self.name, subject, text)
 
 class More(Thing):
-    """A reddit :class:`More`. Subclasses :class:`Thing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
+    """A reddit :class:`More`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
         self.children = None

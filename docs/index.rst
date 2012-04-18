@@ -34,12 +34,6 @@ To install, just do the usual: ::
     $ pip install narwal
 
 
-API
----
-
-First, see below for some example usage.  Then, :ref:`here for the API docs <api>`.
-
-
 Examples
 --------
 
@@ -99,3 +93,13 @@ Get the sender's account info and submissions: ::
 
 Plus a whole lot more, since most of the reddit API has been implemented.  See
 the API docs (or the source) for more features.
+
+
+Documentation
+-------------
+
+.. toctree ::
+   :maxdepth: 2
+   
+   api
+   history

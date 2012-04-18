@@ -174,8 +174,6 @@ class Reddit(object):
         else:
             raise BadResponse(r)
     
-    # START: Basic getting
-    
     def _limit_get(self, *args, **kwargs):
         limit = kwargs.pop('limit') if 'limit' in kwargs else None
         if limit is not None:
@@ -304,6 +302,18 @@ class Reddit(object):
         """
         return self._limit_get('user', user, 'submitted', limit=limit)
     
+    def moderators(self, sr):
+        """GETs moderators of subreddit ``sr``.  Returns :class:`things.ListBlob` object.
+        
+        **NOTE**: The :class:`things.Account` objects in the returned ListBlob *only* have ``id`` and ``name`` set.  This is because that's all reddit returns.  If you need full info on each moderator, you must individually GET them using :meth:`user` or :meth:`things.Account.about`.
+        
+        URL: ``http://www.reddit.com/r/<sr>/about/moderators/``
+        
+        :param sr: name of subreddit
+        """
+        userlist = self.get('r', sr, 'about', 'moderators')
+        return _process_userlist(userlist)
+    
     @_login_required
     def me(self):
         """Login required.  GETs info about logged in user.  Returns :class`things.Account` object.
@@ -325,22 +335,6 @@ class Reddit(object):
         :param limit: max number of subreddits to get
         """
         return self._limit_get('reddits', 'mine', limit=limit)
-    
-    def moderators(self, sr):
-        """GETs moderators of subreddit ``sr``.  Returns :class:`things.ListBlob` object.
-        
-        **NOTE**: The :class:`things.Account` objects in the returned ListBlob *only* have ``id`` and ``name`` set.  This is because that's all reddit returns.  If you need full info on each moderator, you must individually GET them using :meth:`user` or :meth:`things.Account.about`.
-        
-        URL: ``http://www.reddit.com/r/<sr>/about/moderators/``
-        
-        :param sr: name of subreddit
-        """
-        userlist = self.get('r', sr, 'about', 'moderators')
-        return _process_userlist(userlist)
-    
-    # END: Basic getting
-    
-    # START: Logged-in user's basic actions
     
     @_login_required
     def saved(self, limit=None):
@@ -494,6 +488,17 @@ class Reddit(object):
         :type follow: bool
         """
         return self._submit(sr, title, 'self', text=text, follow=follow)
+    
+    @_login_required
+    def delete(self, id_):
+        """Login required.  Send POST to delete an object.  Returns :class:`requests.Response` object.
+        
+        URL: ``http://www.reddit.com/api/delete/``
+        
+        :param sr: full id of object to delete   
+        """
+        data = dict(id=id_)
+        return self.post('api', 'delete', data=data)
     
     @_login_required
     def save(self, id_):
@@ -677,21 +682,6 @@ class Reddit(object):
         return self.post('api', 'subscribe', data=data)
     
     @_login_required
-    def delete(self, id_):
-        """Login required.  Send POST to delete an object.  Returns :class:`requests.Response` object.
-        
-        URL: ``http://www.reddit.com/api/delete/``
-        
-        :param sr: full id of object to delete   
-        """
-        data = dict(id=id_)
-        return self.post('api', 'delete', data=data)
-    
-    # END: Logged-in user's basic actions
-    
-    # START: Logged-in user's messages and comments
-    
-    @_login_required
     def inbox(self, limit=None):
         """Login required.  GETs logged in user's inbox. Returns :class:`things.Listing` object.
         
@@ -784,10 +774,6 @@ class Reddit(object):
         :param limit: max number of submissions to get 
         """
         return self._limit_get('user', self._username, 'hidden', limit=limit)
-    
-    # END: Logged-in user's messages and comments
-    
-    # START: Mod actions
     
     @_login_required
     def approve(self, id_):
@@ -883,8 +869,6 @@ class Reddit(object):
         """
         userlist = self.get('r', sr, 'about', 'contributors')
         return _process_userlist(userlist)
-    
-    # END: Mod actions
 
 
 def connect(*args, **kwargs):

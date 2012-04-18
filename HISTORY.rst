@@ -1,11 +1,11 @@
 .. :changelog:
 
-History
--------
+Changelog
+---------
 
 
-0.2.0a (2012-04-18)
-+++++++++++++++++++
+v0.2.0a (2012-04-18)
+++++++++++++++++++++
 
 * added Reddit.edit() and Commentable.edit()
 * added Reddit.distinguish() and Commentable.distinguish()
