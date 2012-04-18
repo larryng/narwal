@@ -5,7 +5,7 @@ narwal (sic) is a Python wrapper for reddit's API made to be simple, intuitive,
 and concise, i.e. *pythonic*. ::
 
     >>> import narwal
-    >>> session = narwal.connect('narwal_bot', 'hunter2', user_agent='i'm a narw(h)al!')
+    >>> session = narwal.connect('narwal_bot', 'hunter2', user_agent="i'm a narw(h)al!")
     >>> frontpage = session.hot()
     >>> for link in frontpage[:3]:
         ...   print link
@@ -19,6 +19,8 @@ and concise, i.e. *pythonic*. ::
     <Comment [narwal_bot: cool story bro]>
 
 See the docs at http://narwal.readthedocs.org/.
+
+Works with Python 2.7.
 
 
 Installation
@@ -82,7 +84,7 @@ Read the first message: ::
 
 Get the sender's account info and submissions: ::
 
-    >>> user = session.user(message.author)
+    >>> user = session.user(inbox[0].author)
     >>> user.submitted()
     [<Link [(1) test post please ...]>]
 
