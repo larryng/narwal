@@ -1,7 +1,7 @@
 .. _api:
 
-Usage and API
-=============
+Usage
+=====
 
 
 After importing narwal, ::
