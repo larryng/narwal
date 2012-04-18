@@ -10,6 +10,29 @@ from .exceptions import NotLoggedIn, BadResponse, PostError, LoginFail
 from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD, SUBMIT_RESPONSE_LINK_PATTERN
 
 
+def _limit_rate(f, period=API_PERIOD):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if self._respect and self._last_request_time:
+            elapsed = time.time() - self._last_request_time
+            diff = period - elapsed
+            if diff > 0:
+                time.sleep(diff)
+        self._last_request_time = time.time()
+        return f(self, *args, **kwargs)
+    return wrapper
+
+
+def _login_required(f):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if self.logged_in:
+            return f(self, *args, **kwargs)
+        else:
+            raise NotLoggedIn()
+    return wrapper
+
+
 def _process_userlist(userlist):
     r = userlist.children
     items = []
@@ -32,7 +55,6 @@ class Reddit(object):
     :type respect: True or False
     """
     def __init__(self, username=None, password=None, user_agent=None, respect=True):
-        self._username = username
         self._modhash = None
         self._cookies = None
         self._respect = respect
@@ -48,27 +70,6 @@ class Reddit(object):
     
     def __repr__(self):
         return '<Reddit [{}]>'.format(self._username or '(not logged in)')
-    
-    def _login_required(f):
-        @wraps(f)
-        def wrapper(self, *args, **kwargs):
-            if self.logged_in:
-                return f(self, *args, **kwargs)
-            else:
-                raise NotLoggedIn()
-        return wrapper
-    
-    def _limit_rate(f):
-        @wraps(f)
-        def wrapper(self, *args, **kwargs):
-            if self._respect and self._last_request_time:
-                elapsed = time.time() - self._last_request_time
-                diff = API_PERIOD - elapsed
-                if diff > 0:
-                    time.sleep(diff)
-            self._last_request_time = time.time()
-            return f(self, *args, **kwargs)
-        return wrapper
     
     def _inject_request_kwargs(self, kwargs):
         if self._cookies:
@@ -168,6 +169,7 @@ class Reddit(object):
                 j = json.loads(r.content)
                 self._cookies = r.cookies
                 self._modhash = j['json']['data']['modhash']
+                self._username = username
                 return r
             except Exception:
                 raise LoginFail()

@@ -4,6 +4,15 @@ Changelog
 ---------
 
 
+Development
++++++++++++
+
+* added tests
+* made util functions more robust
+* moved saving of username until successful login
+* moved decorators outside of Reddit class for easier testing
+
+
 v0.2.0a (2012-04-18)
 ++++++++++++++++++++
 

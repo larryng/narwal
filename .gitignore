@@ -1,9 +1,10 @@
-test.py
 .git
 .project
 .pydevproject
 .settings
 *.pyc
+LOGIN
+load.py
 dist
 narwal.egg-info
 build
