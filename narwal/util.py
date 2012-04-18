@@ -2,7 +2,7 @@ from .const import BASE_URL, KIND_PATTERN, TYPES
 
 
 def urljoin(*args):
-    return '/'.join(a.strip('/') for a in args)
+    return u'/'.join(a.strip('/') for a in args)
 
 def limstr(s, max_length):
     if len(s) > max_length:
@@ -13,8 +13,8 @@ def limstr(s, max_length):
 
 def relative_url(*args):
     url = urljoin(BASE_URL, *args)
-    if not url.endswith('.json'):
-        url += '/.json'
+    if not url.endswith(u'.json'):
+        url += u'/.json'
     return url
 
 def kind(s):

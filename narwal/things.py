@@ -129,7 +129,60 @@ class Commentable(Thing):
         :param text: comment's body text
         """
         return self._reddit.comment(self.name, text)
+    
+    def edit(self, text):
+        """Edits this thing (POST).  Calls :meth:`narwal.Reddit.edit`.
+        
+        :param text: new text
+        """
+        return self._reddit.edit(self.name, text)
+    
+    def comments(self, limit=None):
+        """GETs comments to this thing.
+        
+        :param limit: max number of comments to return
+        """
+        return self._reddit._limit_get(self.permalink, limit=limit)[1]
+    
+    def distinguish(self, how):
+        """Distinguishes this thing (POST).  Calls :meth:`narwal.Reddit.distinguish`.
+        
+        :param how: either True, False, or 'admin'
+        """
+        return self._reddit.distinguish(self.name, how)
+    
+    def remove(self):
+        """Removes this thing (POST).  Calls :meth:`narwal.Reddit.remove`.
+        """
+        return self._reddit.remove(self.name)
+    
+    def delete(self):
+        """Deletes this thing (POST).  Calls :meth:`narwal.Reddit.delete`.
+        """
+        return self._reddit.delete(self.name)
 
+
+class Hideable(Thing):
+    """Base class for :class:`Thing` objects that are hideable (i.e. :class:`Link` and :class:`Message`).  Subclasses :class:`Thing`.
+    """
+    def hide(self):
+        """Hides this thing (POST).  Calls :meth:`narwal.Reddit.hide`.
+        """
+        return self._reddit.hide(self.name)
+    
+    def unhide(self):
+        """Hides this thing (POST).  Calls :meth:`narwal.Reddit.unhide`.
+        """
+        return self._reddit.unhide(self.name)
+
+
+class Reportable(Thing):
+    """Base class for :class:`Thing` objects that are reportable (i.e. :class:`Link`, :class:`Comment`, and :class:`Message`).  Subclasses :class:`Thing`.
+    """
+    def report(self):
+        """Reports this thing (POST).  Calls :meth:`narwal.Reddit.report`.
+        """
+        return self._reddit.report(self.name)
 
 class Listing(ListBlob):
     """A reddit :class:`Listing`.  Subclasses :class:`ListBlob`.  See https://github.com/reddit/reddit/wiki/thing for more details.
@@ -199,7 +252,7 @@ class Userlist(ListBlob):
     pass
 
 
-class Comment(Votable, Created, Commentable):
+class Comment(Votable, Created, Commentable, Reportable):
     """A reddit :class:`Comment`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
@@ -222,13 +275,13 @@ class Comment(Votable, Created, Commentable):
                                      self.author,
                                      self.body.replace('\n', ' '))
     
-    def _permalink(self, relative=False):
+    def _permalink(self, relative=True):
         args = ('comments', self.link_id[3:], '_', self.id)
         if self.subreddit:
             args = ('r', self.subreddit) + args
-        r = '/'.join(args)
+        r = u'/'.join(args)
         if relative:
-            return '/{}'.format(r) 
+            return u'/{}'.format(r) 
         else:
             return relative_url(r)
     
@@ -241,28 +294,11 @@ class Comment(Votable, Created, Commentable):
     
     @property
     def permalink(self):
-        """Property. Returns permalink."""
+        """Property. Returns permalink as relative path."""
         return self._permalink()
-    
-    def comments(self, limit=None):
-        """GETs comments to this comment.
-        
-        :param limit: max number of comments to return
-        """
-        return self._reddit._limit_get(self._permalink(relative=True), limit=limit)[1]
-    
-    def delete(self):
-        """Deletes this comment (POST).  Calls :meth:`narwal.Reddit.delete`.
-        """
-        return self._reddit.delete(self.name)
-    
-    def remove(self):
-        """Removes this comment (POST).  Calls :meth:`narwal.Reddit.remove`.
-        """
-        return self._reddit.remove(self.name)
 
 
-class Link(Votable, Created, Commentable):
+class Link(Votable, Created, Commentable, Hideable, Reportable):
     """A reddit :class:`Link`. Subclasses :class:`Votable`, :class:`Created`, and :class:`Commentable`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
@@ -292,13 +328,6 @@ class Link(Votable, Created, Commentable):
     def __unicode__(self):
         return u'({}) {}'.format(self.score, self.title)
     
-    def comments(self, limit=None):
-        """GETs the comments for this link.
-        
-        :param limit: max number of comments to get 
-        """
-        return self._reddit._limit_get(self.permalink, limit=limit)[1]
-    
     def save(self):
         """Saves this link (POST).  Calls :meth:`narwal.Reddit.save`.
         """
@@ -308,16 +337,6 @@ class Link(Votable, Created, Commentable):
         """Unsaves this link (POST).  Calls :meth:`narwal.Reddit.unsave`.
         """
         return self._reddit.unsave(self.name)
-    
-    def hide(self):
-        """Hides this link (POST).  Calls :meth:`narwal.Reddit.hide`.
-        """
-        return self._reddit.hide(self.name)
-    
-    def unhide(self):
-        """Hides this link (POST).  Calls :meth:`narwal.Reddit.unhide`.
-        """
-        return self._reddit.unhide(self.name)
     
     def marknsfw(self):
         """Marks link as nsfw (POST).  Calls :meth:`narwal.Reddit.marknsfw`.
@@ -333,16 +352,6 @@ class Link(Votable, Created, Commentable):
         """Approves this link (POST).  Calls :meth:`narwal.Reddit.approve`.
         """
         return self._reddit.approve(self.name)
-    
-    def remove(self):
-        """Removes this link (POST).  Calls :meth:`narwal.Reddit.remove`.
-        """
-        return self._reddit.remove(self.name)
-    
-    def delete(self):
-        """Deletes this link (POST).  Calls :meth:`narwal.Reddit.delete`.
-        """
-        return self._reddit.delete(self.name)
 
 
 class Subreddit(Thing):
@@ -432,7 +441,7 @@ class Subreddit(Thing):
         return self._reddit.contributors(self.display_name)
 
 
-class Message(Created):
+class Message(Created, Hideable, Reportable):
     """A reddit :class:`Message`. Subclasses :class:`Created`.  See https://github.com/reddit/reddit/wiki/thing for more details.
     """
     def __init__(self, *args, **kwargs):
@@ -465,16 +474,6 @@ class Message(Created):
         """
         return self._reddit.unread_message(self.name)
     
-    def hide(self):
-        """Hides message (POST).  Calls :meth:`narwal.Reddit.hide_message`.
-        """
-        return self._reddit.hide_message(self.name)
-    
-    def unhide(self):
-        """Unhides message (POST).  Calls :meth:`narwal.Reddit.unhide_message`.
-        """
-        return self._reddit.unhide_message(self.name)
-    
     def reply(self, text):
         """POSTs reply to message with own message.
         
@@ -488,11 +487,6 @@ class Message(Created):
             'text': text,
         }
         return self._reddit.post('api', 'comment', data=data)
-    
-    def report(self):
-        """Reports message (POST).  Calls :meth:`narwal.Reddit.report`.
-        """
-        return self._reddit.report(self.name)
 
 
 class Account(Thing):

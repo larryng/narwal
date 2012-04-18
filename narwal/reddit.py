@@ -46,6 +46,9 @@ class Reddit(object):
         if username and password:
             self.login(username, password)
     
+    def __repr__(self):
+        return '<Reddit [{}]>'.format(self._username or '(not logged in)')
+    
     def _login_required(f):
         @wraps(f)
         def wrapper(self, *args, **kwargs):
@@ -412,7 +415,24 @@ class Reddit(object):
         """
         data = dict(parent=parent, text=text)
         r = self.post('api', 'comment', data=data)
-        print r.content
+        try:
+            j = json.loads(r.content)
+            data_dict = pull_data_dict(j['jquery'])
+            return self._thingify(data_dict)
+        except Exception:
+            raise BadResponse(r)
+    
+    @_login_required
+    def edit(self, id_, text):
+        """Login required.  Sends POST to change selftext or comment text to ``text``.  Returns :class:`things.Comment` or :class:`things.Link` object depending on what's being edited.
+        
+        URL: ``http://www.reddit.com/api/editusertext/``
+        
+        :param id\_: full id of link or comment to edit
+        :param text: new self or comment text
+        """
+        data = dict(thing_id=id_, text=text)
+        r = self.post('api', 'editusertext', data=data)
         try:
             j = json.loads(r.content)
             data_dict = pull_data_dict(j['jquery'])
@@ -790,6 +810,20 @@ class Reddit(object):
         """
         data = dict(id=id_)
         return self.post('api', 'remove', data=data)
+    
+    @_login_required
+    def distinguish(self, id_, how):
+        """Login required.  Sends POST to distinguish a submission or comment. Returns :class:`requests.Response` object.
+        
+        URL: ``http://www.reddit.com/api/distinguish/``
+        
+        :param id\_: full id of object to distinguish
+        :param how: either True, False, or 'admin'
+        """
+        if how not in (True, False, 'admin'):
+            raise ValueError("how must be either True, False, or 'admin'")
+        data = dict(id=id_, how=how)
+        return self.post('api', 'distinguish', data=data)
     
     @_login_required
     def flairlist(self, r, limit=1000, after=None, before=None):
