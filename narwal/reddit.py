@@ -500,7 +500,7 @@ class Reddit(object):
         :param sr: full id of object to delete   
         """
         data = dict(id=id_)
-        return self.post('api', 'delete', data=data)
+        return self.post('api', 'del', data=data)
     
     @_login_required
     def save(self, id_):
