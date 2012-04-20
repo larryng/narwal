@@ -4,7 +4,7 @@ import requests
 from urlparse import urlparse
 from functools import wraps
 
-from .things import Blob, ListBlob, Account, identify_class
+from .things import Blob, ListBlob, Account, identify_thing
 from .util import relative_url, pull_data_dict
 from .exceptions import NotLoggedIn, BadResponse, PostError, LoginFail
 from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD, SUBMIT_RESPONSE_LINK_PATTERN
@@ -89,7 +89,7 @@ class Reddit(object):
         
         def recur(v):
             if isinstance(v, dict):
-                klass = identify_class(v)
+                klass = identify_thing(v)
                 tmp = klass(self)
                 tmp._path = path
                 retval = helper(tmp, v if klass is Blob else v['data'])
