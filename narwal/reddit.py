@@ -495,7 +495,7 @@ class Reddit(object):
     def delete(self, id_):
         """Login required.  Send POST to delete an object.  Returns :class:`requests.Response` object.
         
-        URL: ``http://www.reddit.com/api/delete/``
+        URL: ``http://www.reddit.com/api/del/``
         
         :param sr: full id of object to delete   
         """
