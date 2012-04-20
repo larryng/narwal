@@ -4,13 +4,14 @@ Changelog
 ---------
 
 
-Development
-+++++++++++
+v0.2.1a (2012-04-20)
+++++++++++++++++++++
 
-* added tests
+* fixed Listing.has_more()
 * made util functions more robust
 * moved saving of username until successful login
 * moved decorators outside of Reddit class for easier testing
+* added some tests
 
 
 v0.2.0a (2012-04-18)
