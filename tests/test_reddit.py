@@ -6,11 +6,13 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath('..'))
 
-from nose.tools import raises, eq_, ok_, timed
+import requests
+from nose.tools import raises, eq_, ok_
 
 from narwal.reddit import Reddit, _limit_rate, _login_required
 from narwal.const import DEFAULT_USER_AGENT, API_PERIOD
-from narwal.exceptions import LoginFail, NotLoggedIn
+from narwal.exceptions import LoginFail, NotLoggedIn, BadResponse
+from narwal import things
 
 
 TEST_AGENT = 'narwal (goo.gl/IBenG) testing' 
@@ -153,4 +155,89 @@ class test__login_required():
 
 
 class test__thingify():
-    pass
+    def setup(self):
+        self.reddit = Reddit(user_agent=TEST_AGENT)
+    
+    def test_atoms(self):
+        for i in [42, 'foobar', True]:
+            eq_(self.reddit._thingify(i), i)
+    
+    def test_empty_dict(self):
+        ok_(isinstance(self.reddit._thingify({}), things.Blob))
+    
+    def test_empty_list(self):
+        ok_(isinstance(self.reddit._thingify([]), things.ListBlob))
+    
+    def test_dict_non_thing(self):
+        v = self.reddit._thingify({'foo': 'bar'})
+        ok_(isinstance(v, things.Blob))
+        eq_(v.foo, 'bar')
+    
+    def test_dict_basic(self):
+        v = self.reddit._thingify({'kind': 't1',
+                                   'data': {'foo': 'bar'}})
+        ok_(isinstance(v, things.Comment))
+        eq_(v.foo, 'bar')
+    
+    def test_list_basic(self):
+        v = self.reddit._thingify([{'kind': 't1',
+                                    'data': {'foo': 'bar'}},
+                                   {'baz': 'bam'}])
+        ok_(isinstance(v, things.ListBlob))
+        ok_(isinstance(v[0], things.Comment))
+        ok_(isinstance(v[1], things.Blob))
+        eq_(v[0].foo, 'bar')
+        eq_(v[1].baz, 'bam')
+    
+    def test_nested(self):
+        path = "/some/path"
+        v = self.reddit._thingify(
+            [{'foo': 'bar'},
+             [{'kind': 't2',
+               'data': {'hello': 'world',
+                        'last': [{'one': 1}]}}]],
+            path=path
+        )
+        
+        ok_(isinstance(v, things.ListBlob))
+        ok_(isinstance(v[0], things.Blob))
+        ok_(isinstance(v[1], things.ListBlob))
+        ok_(isinstance(v[1][0], things.Account))
+        ok_(isinstance(v[1][0].last, things.ListBlob))
+        ok_(isinstance(v[1][0].last[0], things.Blob))
+        
+        eq_(v[0].foo, 'bar')
+        eq_(v[1][0].hello, 'world')
+        eq_(v[1][0].last[0].one, 1)
+        
+        eq_(v._path, path)
+        eq_(v[0]._path, path)
+        eq_(v[1]._path, path)
+        eq_(v[1][0]._path, path)
+        eq_(v[1][0].last._path, path)
+        eq_(v[1][0].last[0]._path, path)
+
+
+class test_get():
+    
+    def setup(self):
+        self.reddit = Reddit(user_agent=TEST_AGENT)
+    
+    def test_basic(self):
+        r = self.reddit.get()
+        ok_(isinstance(r, things.Listing))
+        
+        r = self.reddit.get('r', 'test')
+        ok_(isinstance(r, things.Listing))
+
+        r = self.reddit.get('comments', params={'limit': 3})
+        ok_(isinstance(r, things.Listing))
+        eq_(len(r), 3)
+    
+    def test_badresponse(self):
+        try:
+            self.reddit.get(genstr(), genstr())
+        except Exception as e:
+            ok_(isinstance(e, BadResponse))
+            ok_(isinstance(e.response, requests.Response))
+            ok_(e.response.status_code != 200)
