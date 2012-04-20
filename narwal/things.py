@@ -3,7 +3,7 @@ from .util import limstr, kind, relative_url
 from .exceptions import NoMoreError
 
 
-def identify_class(dict_):
+def identify_thing(dict_):
     if 'kind' in dict_:
         k = kind(dict_['kind']).capitalize()
         return globals()[k]
@@ -217,7 +217,7 @@ class Listing(ListBlob):
     @property
     def has_more(self):
         """Returns True if there are more things that can be retrieved."""
-        return bool(self.after or self._has_literally_more())
+        return bool(self.after or self._has_literally_more)
     
     def more(self, limit=None):
         """A convenience function.  Calls `self.next_listing`."""
