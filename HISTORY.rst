@@ -3,6 +3,10 @@
 Changelog
 ---------
 
+v0.2.3a (2012-04-21)
+++++++++++++++++++++
+* hotfix: default Reddit._username to None
+
 
 v0.2.2a (2012-04-20)
 ++++++++++++++++++++

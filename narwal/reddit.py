@@ -59,6 +59,7 @@ class Reddit(object):
         self._cookies = None
         self._respect = respect
         self._last_request_time = None
+        self._username = None
         
         if respect and not user_agent:
             raise ValueError('must specify user_agent to respect reddit rules')
