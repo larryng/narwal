@@ -70,7 +70,7 @@ class Reddit(object):
             self.login(username, password)
     
     def __repr__(self):
-        return '<Reddit [{}]>'.format(self._username or '(not logged in)')
+        return '<Reddit [{0}]>'.format(self._username or '(not logged in)')
     
     def _inject_request_kwargs(self, kwargs):
         if self._cookies:
