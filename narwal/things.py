@@ -271,7 +271,7 @@ class Comment(Votable, Created, Commentable, Reportable):
         score = None
         if self.ups is not None and self.downs is not None:
             score = self.ups - self.downs
-        return u'({}) {}: {}'.format(score,
+        return u'({0}) {1}: {2}'.format(score,
                                      self.author,
                                      self.body.replace('\n', ' '))
     
@@ -281,7 +281,7 @@ class Comment(Votable, Created, Commentable, Reportable):
             args = ('r', self.subreddit) + args
         r = u'/'.join(args)
         if relative:
-            return u'/{}'.format(r) 
+            return u'/{0}'.format(r) 
         else:
             return relative_url(r)
     
@@ -326,7 +326,7 @@ class Link(Votable, Created, Commentable, Hideable, Reportable):
         super(Link, self).__init__(*args, **kwargs)
     
     def __unicode__(self):
-        return u'({}) {}'.format(self.score, self.title)
+        return u'({0}) {1}'.format(self.score, self.title)
     
     def save(self):
         """Saves this link (POST).  Calls :meth:`narwal.Reddit.save`.
@@ -367,7 +367,7 @@ class Subreddit(Thing):
         super(Subreddit, self).__init__(*args, **kwargs)
     
     def __unicode__(self):
-        return u'r/{}'.format(self.display_name)
+        return u'r/{0}'.format(self.display_name)
     
     def hot(self, limit=None):
         """GETs hot links from this subreddit.  Calls :meth:`narwal.Reddit.hot`.
@@ -461,7 +461,7 @@ class Message(Created, Hideable, Reportable):
         super(Message, self).__init__(*args, **kwargs)
     
     def __unicode__(self):
-        return u'{}: {}'.format(self.author,
+        return u'{0}: {1}'.format(self.author,
                                 self.body.replace('\n', ' ')) 
     
     def read(self):
@@ -483,7 +483,7 @@ class Message(Created, Hideable, Reportable):
         """
         data = {
             'thing_id': self.name,
-            'id': '#commentreply_{}'.format(self.name),
+            'id': '#commentreply_{0}'.format(self.name),
             'text': text,
         }
         return self._reddit.post('api', 'comment', data=data)
