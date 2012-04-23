@@ -272,8 +272,8 @@ class Comment(Votable, Created, Commentable, Reportable):
         if self.ups is not None and self.downs is not None:
             score = self.ups - self.downs
         return u'({0}) {1}: {2}'.format(score,
-                                     self.author,
-                                     self.body.replace('\n', ' '))
+                                        self.author,
+                                        self.body.replace('\n', ' '))
     
     def _permalink(self, relative=True):
         args = ('comments', self.link_id[3:], '_', self.id)
@@ -462,7 +462,7 @@ class Message(Created, Hideable, Reportable):
     
     def __unicode__(self):
         return u'{0}: {1}'.format(self.author,
-                                self.body.replace('\n', ' ')) 
+                                  self.body.replace('\n', ' ')) 
     
     def read(self):
         """Marks message as read (POST).  Calls :meth:`narwal.Reddit.read_message`.
