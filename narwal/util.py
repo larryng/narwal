@@ -1,3 +1,4 @@
+import re
 from .const import BASE_URL, KIND_PATTERN, TYPES
 
 
@@ -13,8 +14,10 @@ def limstr(s, max_length):
     else:
         return s
 
+
 def urljoin(*args):
     return u'/'.join(unicode(a).strip('/') for a in args)
+
 
 def relative_url(*args):
     url = urljoin(BASE_URL, *args)
@@ -22,12 +25,14 @@ def relative_url(*args):
         url += u'/.json'
     return url
 
+
 def kind(s):
     m = KIND_PATTERN.match(s)
     if m:
         return TYPES[m.group('type')]
     else:
         return s
+
 
 def pull_data_dict(lst):
     if not isinstance(lst, list):
@@ -40,3 +45,9 @@ def pull_data_dict(lst):
         elif isinstance(i, dict) and 'data' in i:
             return i
     return None
+
+
+def html_unicode_unescape(s):
+    def f(matchobj):
+        return unichr(int(matchobj.group(1)))
+    return re.sub(r'&amp;#(\d+);', f, s)

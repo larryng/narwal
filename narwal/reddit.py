@@ -5,7 +5,7 @@ from urlparse import urlparse
 from functools import wraps
 
 from .things import Blob, ListBlob, Account, identify_thing
-from .util import relative_url, pull_data_dict
+from .util import relative_url, pull_data_dict, html_unicode_unescape
 from .exceptions import NotLoggedIn, BadResponse, PostError, LoginFail
 from .const import DEFAULT_USER_AGENT, LOGIN_URL, POST_ERROR_PATTERN, API_PERIOD, SUBMIT_RESPONSE_LINK_PATTERN
 
@@ -97,6 +97,8 @@ class Reddit(object):
             elif isinstance(v, list):
                 retval = ListBlob(self, items=[self._thingify(o, path) for o in v])
                 retval._path = path
+            elif isinstance(v, basestring):
+                retval = html_unicode_unescape(v)
             else:
                 retval = v
             return retval
