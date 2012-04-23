@@ -3,6 +3,13 @@
 Changelog
 ---------
 
+v0.2.4a (2012-04-23)
+++++++++++++++++++++
+* automatically un-html-escape unicode chars
+* fixed ValueError due to zero length fields when string formatting in older
+  versions of Python (thanks staticsafe) 
+
+
 v0.2.3a (2012-04-21)
 ++++++++++++++++++++
 * hotfix: default Reddit._username to None
