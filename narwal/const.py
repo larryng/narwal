@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 
 API_PERIOD = 2.0

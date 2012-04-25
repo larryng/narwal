@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 from .const import BASE_URL, KIND_PATTERN, TYPES
 
@@ -35,8 +37,6 @@ def kind(s):
 
 
 def pull_data_dict(lst):
-    if not isinstance(lst, list):
-        raise TypeError('lst must be a list')
     for i in lst:
         if isinstance(i, list):
             v = pull_data_dict(i)

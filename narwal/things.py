@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .const import COMMENTS_PATH_PATTERN, MAX_REPRSTR
 from .util import limstr, kind, relative_url
 from .exceptions import NoMoreError
@@ -28,7 +30,7 @@ class ListBlob(Blob):
     :type reddit: :class:`Reddit`
     :param items: initial list to absorb
     """
-    def __init__(self, reddit, items=[]):
+    def __init__(self, reddit, items=list()):
         super(ListBlob, self).__init__(reddit)
         self._items = items
     
@@ -55,6 +57,33 @@ class ListBlob(Blob):
     
     #def __repr__(self, *args, **kwargs):
     #    return self._items.__repr__(*args, **kwargs)
+    
+    def append(self, *args, **kwargs):
+        return self._items.append(*args, **kwargs)
+
+    def count(self, *args, **kwargs):
+        return self._items.count(*args, **kwargs)
+
+    def extend(self, *args, **kwargs):
+        return self._items.extend(*args, **kwargs)
+
+    def index(self, *args, **kwargs):
+        return self._items.index(*args, **kwargs)
+
+    def insert(self, *args, **kwargs):
+        return self._items.insert(*args, **kwargs)
+
+    def pop(self, *args, **kwargs):
+        return self._items.pop(*args, **kwargs)
+
+    def remove(self, *args, **kwargs):
+        return self._items.remove(*args, **kwargs)
+
+    def reverse(self, *args, **kwargs):
+        return self._items.reverse(*args, **kwargs)
+
+    def sort(self, *args, **kwargs):
+        return self._items.sort(*args, **kwargs)
 
 
 class Thing(Blob):
@@ -77,7 +106,7 @@ class Thing(Blob):
         return self.__unicode__().encode('utf-8', 'replace')
     
     def __unicode__(self):
-        return self.name 
+        return unicode(self.name or '')
 
 
 class Created(Thing):
@@ -542,6 +571,7 @@ class Account(Thing):
         :param text: body of message
         """
         return self._reddit.compose(self.name, subject, text)
+
 
 class More(Thing):
     """A reddit :class:`More`.  See https://github.com/reddit/reddit/wiki/thing for more details.

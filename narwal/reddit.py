@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import time
 import json
 import requests
@@ -188,7 +190,7 @@ class Reddit(object):
             r._limit = limit
         return r
     
-    def _subreddit_get(self, child=None, sr=None, limit=None):
+    def _subreddit_get(self, sr, child, limit=None):
         args = (child,) if child else ()
         if sr:
             args = ('r', sr) + args
@@ -202,7 +204,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get(None, sr, limit)
+        return self._subreddit_get(sr, None, limit)
     
     def new(self, sr=None, limit=None):
         """GETs new links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -212,7 +214,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get('new', sr, limit)
+        return self._subreddit_get(sr, 'new', limit)
     
     def top(self, sr=None, limit=None):
         """GETs top links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -222,7 +224,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get('top', sr, limit)
+        return self._subreddit_get(sr, 'top', limit)
     
     def controversial(self, sr=None, limit=None):
         """GETs controversial links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -232,7 +234,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get('controversial', sr, limit)
+        return self._subreddit_get(sr, 'controversial', limit)
     
     def comments(self, sr=None, limit=None):
         """GETs newest comments.  If ``sr`` is ``None``, gets all.  Returns :class:`things.Listing` object.
@@ -242,7 +244,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of comments to get
         """
-        return self._subreddit_get('comments', sr, limit)
+        return self._subreddit_get(sr, 'comments', limit)
     
     def user(self, username):
         """GETs user info.  Returns :class:`things.Account` object.
@@ -262,14 +264,15 @@ class Reddit(object):
         """
         return self.get('r', sr, 'about')
     
-    def info(self, url):
-        """GETs info about ``url``.  See https://github.com/reddit/reddit/wiki/API%3A-info.json.
+    def info(self, url, limit=None):
+        """GETs "info" about ``url``.  See https://github.com/reddit/reddit/wiki/API%3A-info.json.
         
         URL: ``http://www.reddit.com/api/info/?url=<url>``
         
         :param url: url
+        :param limit: max number of links to get
         """
-        return self.get('api', 'info', params=dict(url=url))
+        return self._limit_get('api', 'info', params=dict(url=url), limit=limit)
     
     def search(self, query, limit=None):
         """Use reddit's search function.  Returns :class:`things.Listing` object.
