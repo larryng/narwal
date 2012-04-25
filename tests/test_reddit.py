@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import random
 import string
 import time
@@ -14,8 +16,7 @@ from narwal.const import DEFAULT_USER_AGENT, API_PERIOD
 from narwal.exceptions import LoginFail, NotLoggedIn, BadResponse
 from narwal import things
 
-
-TEST_AGENT = 'narwal (goo.gl/IBenG) testing' 
+from .common import TEST_AGENT 
 
 
 def genstr(length=16):
@@ -162,6 +163,9 @@ class test__thingify():
         for i in [42, 'foobar', True]:
             eq_(self.reddit._thingify(i), i)
     
+    def test_unescape_unicode(self):
+        eq_(self.reddit._thingify(u'&amp;#34; &amp;#229;'), u'" å')
+    
     def test_empty_dict(self):
         ok_(isinstance(self.reddit._thingify({}), things.Blob))
     
@@ -241,3 +245,93 @@ class test_get():
             ok_(isinstance(e, BadResponse))
             ok_(isinstance(e.response, requests.Response))
             ok_(e.response.status_code != 200)
+
+
+class test__limit_get():
+    
+    def setup(self):
+        self.reddit = Reddit(user_agent=TEST_AGENT)
+    
+    def test_no_limit(self):
+        r = self.reddit._limit_get()
+        s = self.reddit.get()
+        ok_(isinstance(r, things.Listing))
+        eq_(len(r), len(s))
+        ok_(r._limit is None)
+    
+    def test_limit_normal(self):
+        r = self.reddit._limit_get(limit=10)
+        ok_(isinstance(r, things.Listing))
+        eq_(len(r), 10)
+        eq_(r._limit, 10)
+    
+    def test_limit_already_params(self):
+        r = self.reddit._limit_get(params={}, limit=10)
+        ok_(isinstance(r, things.Listing))
+        eq_(len(r), 10)
+        eq_(r._limit, 10)
+    
+    def test_limit_already_limit_in_params(self):
+        r = self.reddit._limit_get(params={'limit': 5}, limit=10)
+        ok_(isinstance(r, things.Listing))
+        eq_(len(r), 10)
+        eq_(r._limit, 10)
+
+
+class test__subreddit_get():
+    
+    def setup(self):
+        self.reddit = Reddit(user_agent=TEST_AGENT)
+    
+    def test(self):
+        r = self.reddit._subreddit_get('pics', None)
+        ok_(all([i.subreddit == 'pics' and isinstance(i, things.Link) for i in r]))
+        
+        r = self.reddit._subreddit_get('funny', 'comments', limit=7)
+        ok_(all([i.subreddit == 'funny' and isinstance(i, things.Comment) for i in r]))
+        eq_(len(r), 7)
+
+
+class test_basic_getters():
+    
+    def setup(self):
+        self.reddit = Reddit(user_agent=TEST_AGENT)
+    
+    def test_hot(self):
+        ok_(isinstance(self.reddit.hot(), things.Listing))
+    
+    def test_new(self):
+        ok_(isinstance(self.reddit.new(), things.Listing))
+    
+    def test_top(self):
+        ok_(isinstance(self.reddit.top(), things.Listing))
+    
+    def test_controversial(self):
+        ok_(isinstance(self.reddit.controversial(), things.Listing))
+    
+    def test_comments(self):
+        ok_(isinstance(self.reddit.comments(), things.Listing))
+    
+    def test_user(self):
+        ok_(isinstance(self.reddit.user('kn0thing'), things.Account))
+    
+    def test_subreddit(self):
+        ok_(isinstance(self.reddit.subreddit('pics'), things.Subreddit))
+    
+    def test_info(self):
+        ok_(isinstance(self.reddit.info('http://www.reddit.com/'), things.Listing))
+    
+    def test_search(self):
+        ok_(isinstance(self.reddit.search('test post'), things.Listing))
+    
+    def test_domain(self):
+        ok_(isinstance(self.reddit.domain('reddit.com'), things.Listing))
+    
+    def test_user_comments(self):
+        ok_(isinstance(self.reddit.user_comments('alienth'), things.Listing))
+    
+    def test_user_submitted(self):
+        ok_(isinstance(self.reddit.user_comments('chromakode'), things.Listing))
+    
+    def test_moderators(self):
+        ok_(isinstance(self.reddit.moderators('politics'), things.ListBlob))

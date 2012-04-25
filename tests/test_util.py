@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath('..'))
 
 from nose.tools import raises, eq_, ok_
 
-from narwal.util import limstr, urljoin, relative_url, kind, pull_data_dict
+from narwal.util import limstr, urljoin, relative_url, kind, pull_data_dict, html_unicode_unescape
 from narwal.const import BASE_URL, TYPES
 
 
@@ -81,10 +83,6 @@ class test_kind():
 
 class test_pull_data_dict():
     
-    @raises(TypeError)
-    def test_error(self):
-        pull_data_dict('asdf')
-    
     def test_none(self):
         eq_(pull_data_dict([]), None)
         eq_(pull_data_dict([1, 3]), None)
@@ -95,3 +93,18 @@ class test_pull_data_dict():
         eq_(pull_data_dict([3, d]), d)
         eq_(pull_data_dict(['as', [2, d]]), d)
         eq_(pull_data_dict([1, ['f', 3], d, '4']), d)
+
+
+class test_html_unicode_unescape():
+    
+    def test(self):
+        cases = {
+            'not unicode': 'not unicode',
+            u'': u'',
+            u'hello world': u'hello world',
+            u'&amp;#34;': u'"',
+            u'&amp;#34; &amp;#229;': u'" å',
+            u'outside &amp;#966;&amp;#960; text': u'outside φπ text'
+        }
+        for a, b in cases.items():
+            eq_(html_unicode_unescape(a), b)
