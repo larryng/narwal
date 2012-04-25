@@ -3,14 +3,15 @@
 Changelog
 ---------
 
-Development
-+++++++++++
+v0.2.5a (2012-04-24)
+++++++++++++++++++++
 * added limit parameter to Reddit.info()
 * changed Reddit._subreddit_get() parameter order and removed default values
 * fixed default value for items in ListBlob to be list() instead of []
 * added list methods to ListBlob
 * fixed Thing.__unicode__() to always return a string (u'' instead of None)
 * added utf-8 coding declaration to source files
+* more tests
 
 
 v0.2.4a (2012-04-23)
