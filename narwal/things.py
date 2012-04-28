@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .const import COMMENTS_PATH_PATTERN, MAX_REPRSTR
+from .const import MAX_REPRSTR
 from .util import limstr, kind, relative_url
-from .exceptions import NoMoreError
+from .exceptions import NoMoreError, UnsupportedError
 
 
 def identify_thing(dict_):
@@ -256,13 +256,21 @@ class Listing(ListBlob):
         """GETs next :class:`Listing` directed to by this :class:`Listing`.  Returns :class:`Listing` object.
         
         :param limit: max number of entries to get
+        :raise UnsupportedError: raised when trying to load more comments
         """
         if self.after:
             return self._reddit._limit_get(self._path, params={'after': self.after}, limit=limit or self._limit)
-        elif self._has_literally_more():
-            start, link_id, link_title = COMMENTS_PATH_PATTERN.match(self._path)
-            more_id = self[-1].id
-            return self._reddit._limit_get(start, link_id, link_title, more_id, limit=limit or self._limit)
+        elif self._has_literally_more:
+            # this doesn't work.
+            #
+            # the only way to "load more comments" is to make a post to
+            # /api/morechildren; however, reddit returns a clusterfuck of a 
+            # response that contains the comments already formatted to be
+            # directly inserted into the HTML page.
+            #
+            # extracting the comment data requires more work than it's worth,
+            # to be honest.
+            raise UnsupportedError()
         else:
             raise NoMoreError('no more items')
     
@@ -538,12 +546,12 @@ class Account(Thing):
     def __unicode__(self):
         return unicode(self.name)
     
-    def overview(self):
+    def overview(self, limit=None):
         """GETs overview of user's activities.  Returns :class:`Listing`.
         
         URL: http://www.reddit.com/user/<self.name>/overview/
         """
-        return self._reddit.get('user', self.name, 'overview')
+        return self._reddit.user_overview(self.name, limit=limit)
     
     def comments(self, limit=None):
         """GETs user's comments.  Calls :meth:`narwal.Reddit.user_comments`.

@@ -294,6 +294,14 @@ class Reddit(object):
         """
         return self._limit_get('domain', domain_, limit=limit)
     
+    def user_overview(self, user, limit=None):
+        """GETs a user's posted comments.  Returns :class:`things.Listing` object.
+        
+        :param user: reddit username
+        :param limit: max number of comments to return
+        """
+        return self._limit_get('user', user, 'overview', limit=limit)
+    
     def user_comments(self, user, limit=None):
         """GETs a user's posted comments.  Returns :class:`things.Listing` object.
         

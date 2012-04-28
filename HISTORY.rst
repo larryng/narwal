@@ -3,6 +3,13 @@
 Changelog
 ---------
 
+Development
++++++++++++
+* added Reddit.user_overview()
+* attempting to "load more comments" via Listing.more() or .next_listing()
+  now raises UnsupportedError()
+
+
 v0.2.5a (2012-04-24)
 ++++++++++++++++++++
 * added limit parameter to Reddit.info()
