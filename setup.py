@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
+from narwal import __version__
 
 setup(
     name='narwal',
     packages=['narwal'],
-    version='0.2.5a',
+    version=__version__,
     author='Larry Ng',
     author_email='ng.larry@gmail.com',
     url='https://github.com/larryng/narwal',
