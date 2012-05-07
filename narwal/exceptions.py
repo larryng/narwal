@@ -16,18 +16,25 @@ class UnsupportedError(AlienException):
     '''Currently unsupported API feature'''
 
 class PostError(AlienException):
-    """Response contained reddit errors in response."""
+    """Response containing reddit errors in response."""
     def __init__(self, errors):
-        plural = 's' if len(errors) > 1 else ''
-        super(PostError, self).__init__('error{} returned: {}'.format(plural, ', '.join(errors)))
+        super(PostError, self).__init__()
         
         #: list of string reddit errors received in response
         self.errors = errors
 
 class BadResponse(AlienException):
-    """A non-200 response, or a 200 response with non-OK content received.""" 
+    """A non-200 response.""" 
     def __init__(self, response):
         super(BadResponse, self).__init__('{} received'.format(response.status_code))
         
         #: the :class:`requests.Response` object returned
         self.response = response
+
+class UnexpectedResponse(AlienException):
+    """A 200 response with unexpected content."""
+    def __init__(self, jsonobj):
+        super(UnexpectedResponse, self).__init__()
+        
+        #: the json dict returned
+        self.jsonobj = jsonobj

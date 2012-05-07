@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import re
-from .const import BASE_URL, KIND_PATTERN, TYPES
+from .const import BASE_URL, KIND_PATTERN, TYPES, TRUTHY_OBJECTS
+from .exceptions import UnexpectedResponse
 
 
 def limstr(s, max_length):
@@ -21,8 +22,11 @@ def urljoin(*args):
     return u'/'.join(unicode(a).strip('/') for a in args)
 
 
-def relative_url(*args):
-    url = urljoin(BASE_URL, *args)
+def reddit_url(*args):
+    if len(args) > 0 and args[0].startswith(BASE_URL):
+        url = urljoin(*args)
+    else:
+        url = urljoin(BASE_URL, *args)
     if not url.endswith(u'.json'):
         url += u'/.json'
     return url
@@ -51,3 +55,10 @@ def html_unicode_unescape(s):
     def f(matchobj):
         return unichr(int(matchobj.group(1)))
     return re.sub(r'&amp;#(\d+);', f, s)
+
+
+def assert_truthy(d):
+    if d in TRUTHY_OBJECTS:
+        return True
+    else:
+        raise UnexpectedResponse(d)

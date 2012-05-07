@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .const import MAX_REPRSTR
-from .util import limstr, kind, relative_url
+from .util import limstr, kind, reddit_url
 from .exceptions import NoMoreError, UnsupportedError
 
 
@@ -173,12 +173,12 @@ class Commentable(Thing):
         """
         return self._reddit._limit_get(self.permalink, limit=limit)[1]
     
-    def distinguish(self, how):
+    def distinguish(self, how=True):
         """Distinguishes this thing (POST).  Calls :meth:`narwal.Reddit.distinguish`.
         
         :param how: either True, False, or 'admin'
         """
-        return self._reddit.distinguish(self.name, how)
+        return self._reddit.distinguish(self.name, how=how)
     
     def delete(self):
         """Deletes this thing (POST).  Calls :meth:`narwal.Reddit.delete`.
@@ -261,16 +261,20 @@ class Listing(ListBlob):
         if self.after:
             return self._reddit._limit_get(self._path, params={'after': self.after}, limit=limit or self._limit)
         elif self._has_literally_more:
-            # this doesn't work.
-            #
-            # the only way to "load more comments" is to make a post to
-            # /api/morechildren; however, reddit returns a clusterfuck of a 
-            # response that contains the comments already formatted to be
-            # directly inserted into the HTML page.
-            #
-            # extracting the comment data requires more work than it's worth,
-            # to be honest.
-            raise UnsupportedError()
+            more = self[-1]
+            data = dict(
+                link_id=self[0].parent_id,
+                id=more.name,
+                children=','.join(more.children)
+            )
+            j = self._reddit.post('api', 'morechildren', data=data)
+            # since reddit is inconsistent here, we're hacking it to be
+            # consistent so it'll work with _thingify
+            d = j['json']
+            d['kind'] = 'Listing'
+            d['data']['children'] = d['data']['things']
+            del d['data']['things']
+            return self._reddit._thingify(d, path=self._path) 
         else:
             raise NoMoreError('no more items')
     
@@ -320,7 +324,7 @@ class Comment(Votable, Created, Commentable, Reportable):
         if relative:
             return u'/{0}'.format(r) 
         else:
-            return relative_url(r)
+            return reddit_url(r)
     
     @property
     def permalink(self):
@@ -389,6 +393,11 @@ class Link(Votable, Created, Commentable, Hideable, Reportable):
         """Approves this link (POST).  Calls :meth:`narwal.Reddit.approve`.
         """
         return self._reddit.approve(self.name)
+    
+    def refresh(self):
+        """Re-GETs this link (does not alter the object).  Returns :class:`Link` object.
+        """
+        return self._reddit.by_id(self.name)
 
 
 class Subreddit(Thing):
@@ -467,15 +476,30 @@ class Subreddit(Thing):
         """
         return self._reddit.submit_text(self.display_name, title, text)
     
-    def moderators(self):
+    def moderators(self, limit=None):
         """GETs moderators for this subreddit.  Calls :meth:`narwal.Reddit.moderators`.
         """
-        return self._reddit.moderators(self.display_name)
+        return self._reddit.moderators(self.display_name, limit=limit)
     
-    def contributors(self):
+    def flair(self, user, text, css_class):
+        """Sets flair for `user` in this subreddit (POST).  Calls :meth:`narwal.Reddit.flairlist`.
+        """
+        return self._reddit.flair(self.display_name, user, text, css_class)
+    
+    def flairlist(self, limit=1000, after=None, before=None):
+        """GETs flairlist for this subreddit.  Calls :meth:`narwal.Reddit.flairlist`.
+        """
+        return self._reddit.flairlist(self.display_name, limit=limit, after=after, before=before)
+    
+    def flaircsv(self, flair_csv):
+        """Bulk sets flair for users in this subreddit (POST).  Calls :meth:`narwal.Reddit.flaircsv`.
+        """
+        return self._reddit.flaircsv(self.display_name, flair_csv)
+    
+    def contributors(self, limit=None):
         """GETs contributors for this subreddit.  Calls :meth:`narwal.Reddit.contributors`.
         """
-        return self._reddit.contributors(self.display_name)
+        return self._reddit.contributors(self.display_name, limit=limit)
 
 
 class Message(Created, Hideable, Reportable):
@@ -524,6 +548,11 @@ class Message(Created, Hideable, Reportable):
             'text': text,
         }
         return self._reddit.post('api', 'comment', data=data)
+    
+    def refresh(self):
+        """Re-GETs this message (does not alter the object).  Returns :class:`Message` object.
+        """
+        return self._reddit.get('message', 'messages', self.id)[0]
 
 
 class Account(Thing):
