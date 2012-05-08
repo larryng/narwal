@@ -3,6 +3,27 @@
 Changelog
 ---------
 
+v0.3.0 (2012-05-07)
++++++++++++++++++++
+* added api_type='json' to all POST data
+* Reddit.post() now returns a (json) dict instead of requests.Response object.
+* All POST methods that originally returned a requests.Response object now
+  return something different.  See the docs for more details. 
+* Listing.next_listing() now works with comment listings
+* fixed Reddit.submit_link() and Reddit.submit_text()
+* fixed Reddit.distinguish()
+* fixed Reddit.flairlist() and Reddit.flair()
+* added Reddit.by_id()
+* added Subreddit.flairlist(), Subreddit.flair(), and Subreddit.flaircsv()
+* changed PostError.errors to return error list exactly as returned by reddit 
+* renamed relative_url to reddit_url and made it work nicely with absolute URLs
+* added Link.refresh() and Message.refresh()
+* removed Reddit.hide_message() and Reddit.unhide_message()
+* added limit kwarg to Reddit.moderators() and Reddit.contributors()
+* added extensive test coverage for the reddit module
+* fixed several doc errors
+
+
 v0.2.6a (2012-04-28)
 ++++++++++++++++++++
 * added Reddit.user_overview()
