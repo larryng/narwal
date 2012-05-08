@@ -6,8 +6,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 from nose.tools import raises, eq_, ok_
 
-from narwal.util import limstr, urljoin, relative_url, kind, pull_data_dict, html_unicode_unescape
-from narwal.const import BASE_URL, TYPES
+from narwal.util import limstr, urljoin, reddit_url, kind, pull_data_dict, html_unicode_unescape, assert_truthy
+from narwal.const import BASE_URL, TYPES, TRUTHY_OBJECTS
+from narwal.exceptions import UnexpectedResponse
 
 
 class test_limstr():
@@ -48,19 +49,19 @@ class test_urljoin():
         eq_(urljoin('/a/', '/b', 'c///'), u'a/b/c')
 
 
-class test_relative_url():
+class test_reddit_url():
     
     def setup(self):
         self.url = BASE_URL.rstrip('/')
     
     def test_normal(self):
-        eq_(relative_url(), self.url + u'/.json')
-        eq_(relative_url('a'), self.url + u'/a/.json')
-        eq_(relative_url('a', 'b'), self.url + u'/a/b/.json')
+        eq_(reddit_url(), self.url + u'/.json')
+        eq_(reddit_url('a'), self.url + u'/a/.json')
+        eq_(reddit_url('a', 'b'), self.url + u'/a/b/.json')
     
     def test_ends_with_json(self):
-        eq_(relative_url('a/b/.json'), self.url + u'/a/b/.json')
-        eq_(relative_url('a', '/b.json'), self.url + u'/a/b.json')
+        eq_(reddit_url('a/b/.json'), self.url + u'/a/b/.json')
+        eq_(reddit_url('a', '/b.json'), self.url + u'/a/b.json')
 
 
 class test_kind():
@@ -108,3 +109,14 @@ class test_html_unicode_unescape():
         }
         for a, b in cases.items():
             eq_(html_unicode_unescape(a), b)
+
+
+class test_assert_truthy():
+    
+    def test_normal(self):
+        for i in TRUTHY_OBJECTS:
+            eq_(assert_truthy(i), True)
+    
+    @raises(UnexpectedResponse)
+    def test_error(self):
+        assert_truthy({'foo': 1})

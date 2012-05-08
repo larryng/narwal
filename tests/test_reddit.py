@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import random
-import string
-import time
-
 import sys
 import os
 sys.path.insert(0, os.path.abspath('..'))
 
+import time
+import random
 import requests
+from functools import partial 
 from nose.tools import raises, eq_, ok_
 
 from narwal.reddit import Reddit, _limit_rate, _login_required
@@ -16,24 +15,22 @@ from narwal.const import DEFAULT_USER_AGENT, API_PERIOD
 from narwal.exceptions import LoginFail, NotLoggedIn, BadResponse
 from narwal import things
 
-from .common import TEST_AGENT 
+from .common import TEST_AGENT, genstr  
 
 
-def genstr(length=16):
-    return ''.join([random.choice(string.ascii_letters) for _ in xrange(length)]) 
+USERNAME = 'reddit'
+PASSWORD = 'password'
+USERNAME2 = 'larry'
+PASSWORD2 = 'password'
+TEST_SR = 'reddit_test1'
+CREATED_SR = 'myreddit'
 
-
-def setup():
-    global USERNAME, PASSWORD, reddit
-    path = os.path.join(os.path.dirname(__file__), os.path.pardir, 'LOGIN')
-    with open(path, 'r') as f:
-        USERNAME, PASSWORD = f.read().split(' ')
-
+# TODO: document prerequisites for running these tests
 
 class test_login():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     '''
     # if we run this test too many times, reddit blocks us, so i'm leaving it
@@ -54,7 +51,7 @@ class test_login():
 class test_logged_in():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     def test(self):
         eq_(self.reddit.logged_in, False)
@@ -106,6 +103,55 @@ class test__inject_request_kwargs():
         eq_(result['headers']['User-Agent'], TEST_AGENT)
 
 
+def _opposite_pair_test_helper(link, attr, ftrue, ffalse):
+    def testval():
+        return getattr(link, attr)
+    
+    if testval():
+        ok_(ftrue(link))
+        link = link.refresh()
+        ok_(not testval())
+        
+        ok_(ffalse(link))
+        link = link.refresh()
+        ok_(testval())
+    else:
+        ok_(ffalse(link))
+        link = link.refresh()
+        ok_(testval())
+        
+        ok_(ftrue(link))
+        link = link.refresh()
+        ok_(not testval())
+
+
+def _limit_getter_test_helper(f):
+    ok_(isinstance(f(), things.Listing))
+    ok_(isinstance(f(limit=random.randint(1, 100)), things.Listing))
+
+
+class test__inject_post_data():
+    
+    def test_not_logged_in(self):
+        r = Reddit(user_agent=TEST_AGENT)
+        
+        result = r._inject_post_data({})
+        eq_(result, {'data': {'api_type': 'json'}})
+        
+        result = r._inject_post_data({'a': 1})
+        eq_(result['a'], 1)
+        eq_(result['data']['api_type'], 'json')
+        
+        result = r._inject_post_data({'data': {'api_type': 'not'}})
+        eq_(result['data']['api_type'], 'not')
+
+    def test_logged_in(self):
+        r = Reddit(USERNAME, PASSWORD, user_agent=TEST_AGENT)
+        
+        result = r._inject_post_data({})
+        eq_(result['data']['uh'], r._modhash)
+
+
 class test__limit_rate():
     
     def test(self):
@@ -143,7 +189,7 @@ class test__login_required():
                 self.dummy += 1
         
         self.dummy = 0
-        self.reddit = RedditTester(user_agent=TEST_AGENT)
+        self.reddit = RedditTester(user_agent=TEST_AGENT, respect=False)
     
     @raises(NotLoggedIn)
     def test_fail(self):
@@ -225,13 +271,13 @@ class test__thingify():
 class test_get():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     def test_basic(self):
         r = self.reddit.get()
         ok_(isinstance(r, things.Listing))
         
-        r = self.reddit.get('r', 'test')
+        r = self.reddit.get('r', TEST_SR)
         ok_(isinstance(r, things.Listing))
 
         r = self.reddit.get('comments', params={'limit': 3})
@@ -250,7 +296,7 @@ class test_get():
 class test__limit_get():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     def test_no_limit(self):
         r = self.reddit._limit_get()
@@ -281,57 +327,301 @@ class test__limit_get():
 class test__subreddit_get():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     def test(self):
-        r = self.reddit._subreddit_get('pics', None)
-        ok_(all([i.subreddit == 'pics' and isinstance(i, things.Link) for i in r]))
+        r = self.reddit._subreddit_get(TEST_SR, None)
+        ok_(all([i.subreddit == TEST_SR and isinstance(i, things.Link) for i in r]))
         
-        r = self.reddit._subreddit_get('funny', 'comments', limit=7)
-        ok_(all([i.subreddit == 'funny' and isinstance(i, things.Comment) for i in r]))
-        eq_(len(r), 7)
+        r = self.reddit._subreddit_get(TEST_SR, 'comments', limit=4)
+        ok_(all([i.subreddit == TEST_SR and isinstance(i, things.Comment) for i in r]))
+        eq_(len(r), 4)
 
 
-class test_basic_getters():
+class test_getters():
     
     def setup(self):
-        self.reddit = Reddit(user_agent=TEST_AGENT)
+        self.reddit = Reddit(user_agent=TEST_AGENT, respect=False)
     
     def test_hot(self):
-        ok_(isinstance(self.reddit.hot(), things.Listing))
+        _limit_getter_test_helper(self.reddit.hot)
     
     def test_new(self):
-        ok_(isinstance(self.reddit.new(), things.Listing))
+        _limit_getter_test_helper(self.reddit.new)
     
     def test_top(self):
-        ok_(isinstance(self.reddit.top(), things.Listing))
+        _limit_getter_test_helper(self.reddit.top)
     
     def test_controversial(self):
-        ok_(isinstance(self.reddit.controversial(), things.Listing))
+        _limit_getter_test_helper(self.reddit.controversial)
     
     def test_comments(self):
-        ok_(isinstance(self.reddit.comments(), things.Listing))
+        _limit_getter_test_helper(self.reddit.comments)
     
     def test_user(self):
-        ok_(isinstance(self.reddit.user('kn0thing'), things.Account))
+        ok_(isinstance(self.reddit.user('reddit'), things.Account))
     
     def test_subreddit(self):
-        ok_(isinstance(self.reddit.subreddit('pics'), things.Subreddit))
+        ok_(isinstance(self.reddit.subreddit(TEST_SR), things.Subreddit))
     
     def test_info(self):
-        ok_(isinstance(self.reddit.info('http://www.reddit.com/'), things.Listing))
+        f = partial(self.reddit.info, 'http://www.google.com/')
+        _limit_getter_test_helper(f)
     
     def test_search(self):
-        ok_(isinstance(self.reddit.search('test post'), things.Listing))
+        f = partial(self.reddit.search, 'test post')
+        _limit_getter_test_helper(f)
     
     def test_domain(self):
-        ok_(isinstance(self.reddit.domain('reddit.com'), things.Listing))
+        f = partial(self.reddit.domain, 'google.com')
+        _limit_getter_test_helper(f)
     
     def test_user_comments(self):
-        ok_(isinstance(self.reddit.user_comments('alienth'), things.Listing))
+        f = partial(self.reddit.user_comments, 'reddit')
+        _limit_getter_test_helper(f)
     
     def test_user_submitted(self):
-        ok_(isinstance(self.reddit.user_comments('chromakode'), things.Listing))
+        f = partial(self.reddit.user_submitted, 'reddit')
+        _limit_getter_test_helper(f)
     
     def test_moderators(self):
-        ok_(isinstance(self.reddit.moderators('politics'), things.ListBlob))
+        ok_(isinstance(self.reddit.moderators(TEST_SR), things.ListBlob))
+        ok_(isinstance(self.reddit.moderators(TEST_SR, limit=random.randint(1, 100)), things.ListBlob))
+    
+
+class test_logged_in_getters():
+    
+    def setup(self):
+        self.reddit = Reddit(USERNAME, PASSWORD, user_agent=TEST_AGENT, respect=False)
+    
+    def test_me(self):
+        a = self.reddit.me()
+        ok_(isinstance(a, things.Account))
+        eq_(a.name, USERNAME)
+    
+    def test_mine(self):
+        _limit_getter_test_helper(self.reddit.mine)
+        _limit_getter_test_helper(partial(self.reddit.mine, 'contributor'))
+        _limit_getter_test_helper(partial(self.reddit.mine, 'moderator'))
+    
+    def test_inbox(self):
+        _limit_getter_test_helper(self.reddit.inbox)
+    
+    def test_unread(self):
+        _limit_getter_test_helper(self.reddit.unread)
+    
+    def test_messages(self):
+        _limit_getter_test_helper(self.reddit.messages)
+    
+    def test_commentreplies(self):                                                                                   
+        _limit_getter_test_helper(self.reddit.commentreplies)                                                         
+                                                                                                                     
+    def test_postreplies(self):                                                                                      
+        _limit_getter_test_helper(self.reddit.postreplies)                                                            
+                                                                                                                     
+    def test_sent(self):                                                                                             
+        _limit_getter_test_helper(self.reddit.sent)                                                                   
+                                                                                                                     
+    def test_modmail(self):                                                                                          
+        _limit_getter_test_helper(self.reddit.modmail)                                                                
+
+    def test_liked(self):
+        _limit_getter_test_helper(self.reddit.liked)
+
+    def test_disliked(self):
+        _limit_getter_test_helper(self.reddit.disliked)
+
+    def test_hidden(self):
+        _limit_getter_test_helper(self.reddit.hidden)
+    
+    def test_contributors(self):
+        ok_(isinstance(self.reddit.contributors(CREATED_SR), things.ListBlob))
+        ok_(isinstance(self.reddit.contributors(CREATED_SR, limit=random.randint(1, 100)), things.ListBlob))
+
+
+class test_posters():
+    
+    def setup(self):
+        self.reddit = Reddit(USERNAME, PASSWORD, user_agent=TEST_AGENT, respect=False)
+        self.link = self.reddit.hot()[0]
+        self.created = []
+    
+    def test_vote(self):
+        l = self.link
+        ok_(self.reddit.vote(l.name, 1))
+        l = l.refresh()
+        eq_(l.likes, True)
+        
+        ok_(self.reddit.vote(l.name, 0))
+        l = l.refresh()
+        eq_(l.likes, None)
+        
+        ok_(self.reddit.vote(l.name, -1))
+        l = l.refresh()
+        eq_(l.likes, False)
+    
+    def test_upvote(self):
+        l = self.link
+        ok_(self.reddit.upvote(l.name))
+        l = l.refresh()
+        eq_(l.likes, True)
+    
+    def test_downvote(self):
+        l = self.link
+        ok_(self.reddit.downvote(l.name))
+        l = l.refresh()
+        eq_(l.likes, False)
+    
+    def test_unvote(self):
+        l = self.link
+        ok_(self.reddit.unvote(l.name))
+        l = l.refresh()
+        eq_(l.likes, None)
+    
+    def test_comment_and_edit(self):
+        s = genstr()
+        c = self.link.comment(s)
+        if c:
+            self.created.append(c)
+            
+        eq_(c.author, USERNAME)
+        eq_(c.parent_id, self.link.name)
+        eq_(c.body, s)
+        
+        s = genstr()
+        c = c.edit(s)
+        eq_(c.body, s)
+    
+    def test_submit_link(self):
+        t = genstr()
+        u = 'http://www.google.com/?t={0}'.format(t)
+        l = self.reddit.submit_link(TEST_SR, t, u)
+        if l:
+            self.created.append(l)
+        
+        eq_(l.subreddit, TEST_SR)
+        eq_(l.author, USERNAME)
+        eq_(l.title, t)
+        eq_(l.url, u)
+    
+    def test_submit_text_and_edit(self):
+        t = genstr()
+        b = genstr()
+        l = self.reddit.submit_text(TEST_SR, t, b)
+        if l:
+            self.created.append(l)
+            
+        eq_(l.subreddit, TEST_SR)
+        eq_(l.author, USERNAME)
+        eq_(l.title, t)
+        eq_(l.selftext, b)
+        
+        b = genstr()
+        l = l.edit(b)
+        eq_(l.selftext, b)
+    
+    # TODO: test delete
+    
+    def test_save_and_unsave(self):
+        _opposite_pair_test_helper(
+            self.link,
+            'saved',
+            lambda l: self.reddit.unsave(l.name),
+            lambda l: self.reddit.save(l.name)
+        )
+    
+    def test_hide_and_unhide(self):
+        _opposite_pair_test_helper(
+            self.link,
+            'hidden',
+            lambda l: self.reddit.unhide(l.name),
+            lambda l: self.reddit.hide(l.name)
+        )
+    
+    def test_marknsfw_and_unmarknsfw(self):
+        link = self.reddit.submit_text(TEST_SR, 'foo', 'bar')
+        if link:
+            self.created.append(link)
+        _opposite_pair_test_helper(
+            link,
+            'over_18',
+            lambda l: self.reddit.unmarknsfw(l.name),
+            lambda l: self.reddit.marknsfw(l.name)
+        )
+    
+    def test_report(self):
+        link = self.reddit.submit_text(CREATED_SR, 'foo', 'bar')
+        if link:
+            self.created.append(link)
+        ok_(self.reddit.report(link.name))
+        link = link.refresh()
+        eq_(link.num_reports, 1)
+        # need to test it was actually reported
+    
+    def test_compose_read_and_unread_message(self):
+        r2 = Reddit(USERNAME2, PASSWORD2, user_agent=TEST_AGENT, respect=False)
+        ok_(self.reddit.compose(USERNAME2, 'foo', 'bar'))
+        m = r2.unread()[0]
+        ok_(m.new)
+        eq_(m.author, USERNAME)
+        eq_(m.subject, 'foo')
+        eq_(m.body, 'bar')
+        
+        ok_(r2.read_message(m.name))
+        l = r2.unread()
+        ok_(len(l) <= 0 or l[0].name != m.name)
+        
+        ok_(r2.unread_message(m.name))
+        n = r2.unread()[0]
+        eq_(m.name, n.name)
+    
+    def test_subscribe_and_unsubscribe(self):
+        sr = self.reddit.subreddit(TEST_SR).name
+        ok_(self.reddit.subscribe(sr))
+        ok_(TEST_SR in [r.display_name for r in self.reddit.mine()])
+        ok_(self.reddit.unsubscribe(sr))
+        ok_(TEST_SR not in [r.display_name for r in self.reddit.mine()])
+        
+        ok_(self.reddit.subscribe(TEST_SR))
+        ok_(TEST_SR in [r.display_name for r in self.reddit.mine()])
+        ok_(self.reddit.unsubscribe(TEST_SR))
+        ok_(TEST_SR not in [r.display_name for r in self.reddit.mine()])
+    
+    def test_approve(self):
+        l = self.reddit.submit_text(CREATED_SR, 'foo', 'bar')
+        if l:
+            self.created.append(l)
+        
+        ok_(self.reddit.approve(l.name))
+        l = l.refresh()
+        eq_(l.approved_by, USERNAME)
+    
+    def test_remove(self):
+        l = self.reddit.submit_text(CREATED_SR, 'foo', 'bar')
+        if l:
+            self.created.append(l)
+        
+        ok_(self.reddit.remove(l.name))
+        l = l.refresh()
+        eq_(l.banned_by, USERNAME)
+    
+    def test_distinguish(self):
+        l = self.reddit.submit_text(CREATED_SR, 'foo', 'bar')
+        if l:
+            self.created.append(l)
+        
+        ok_(self.reddit.distinguish(l.name))
+        # TODO: check if this actually distinguished.  don't know how
+    
+    def test_flair_flairlist_flaircsv(self):
+        ok_(self.reddit.flair(CREATED_SR, USERNAME2, 'sometext', 'someclass'))
+        l = self.reddit.flairlist(CREATED_SR)
+        ok_((USERNAME2, 'sometext', 'someclass') in
+            [(a.user, a.flair_text, a.flair_css_class) for a in l])
+        ok_(self.reddit.flaircsv(CREATED_SR, '{0},,'.format(USERNAME2)))
+        l = self.reddit.flairlist(CREATED_SR)
+        ok_(USERNAME2 not in [a.user for a in l])
+    
+    def teardown(self):
+        for i in self.created:
+            i.delete()
