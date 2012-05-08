@@ -5,10 +5,10 @@ import re
 __version__ = '0.3.0'
 
 API_PERIOD = 2.0
-#BASE_URL = 'http://www.reddit.com'
-#LOGIN_URL = 'https://ssl.reddit.com/api/login.json'
-BASE_URL = 'http://reddit.local:8888'
-LOGIN_URL = 'http://reddit.local:8888/api/login.json'
+BASE_URL = 'http://www.reddit.com'
+LOGIN_URL = 'https://ssl.reddit.com/api/login.json'
+#BASE_URL = 'http://reddit.local:8888'
+#LOGIN_URL = 'http://reddit.local:8888/api/login.json'
 DEFAULT_USER_AGENT = 'python-narwal/{0}'.format(__version__)
 
 TYPES = {
