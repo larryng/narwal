@@ -227,7 +227,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get(sr, None, limit)
+        return self._subreddit_get(sr, None, limit=limit)
     
     def new(self, sr=None, limit=None):
         """GETs new links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -237,7 +237,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get(sr, 'new', limit)
+        return self._subreddit_get(sr, 'new', limit=limit)
     
     def top(self, sr=None, limit=None):
         """GETs top links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -247,7 +247,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get(sr, 'top', limit)
+        return self._subreddit_get(sr, 'top', limit=limit)
     
     def controversial(self, sr=None, limit=None):
         """GETs controversial links.  If ``sr`` is ``None``, gets from main.  Returns :class:`things.Listing` object.
@@ -257,7 +257,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of submissions to get
         """
-        return self._subreddit_get(sr, 'controversial', limit)
+        return self._subreddit_get(sr, 'controversial', limit=limit)
     
     def comments(self, sr=None, limit=None):
         """GETs newest comments.  If ``sr`` is ``None``, gets all.  Returns :class:`things.Listing` object.
@@ -267,7 +267,7 @@ class Reddit(object):
         :param sr: subreddit name
         :param limit: max number of comments to get
         """
-        return self._subreddit_get(sr, 'comments', limit)
+        return self._subreddit_get(sr, 'comments', limit=limit)
     
     def user(self, username):
         """GETs user info.  Returns :class:`things.Account` object.
