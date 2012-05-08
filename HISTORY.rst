@@ -3,11 +3,11 @@
 Changelog
 ---------
 
-v0.3.0 (2012-05-07)
-+++++++++++++++++++
+v0.3.0b (2012-05-07)
+++++++++++++++++++++
 * added api_type='json' to all POST data
 * Reddit.post() now returns a (json) dict instead of requests.Response object.
-* All POST methods that originally returned a requests.Response object now
+* all POST methods that originally returned a requests.Response object now
   return something different.  See the docs for more details. 
 * Listing.next_listing() now works with comment listings
 * fixed Reddit.submit_link() and Reddit.submit_text()
@@ -20,6 +20,7 @@ v0.3.0 (2012-05-07)
 * added Link.refresh() and Message.refresh()
 * removed Reddit.hide_message() and Reddit.unhide_message()
 * added limit kwarg to Reddit.moderators() and Reddit.contributors()
+* added types 6=link, 7=message to work with local reddit instance
 * added extensive test coverage for the reddit module
 * fixed several doc errors
 
