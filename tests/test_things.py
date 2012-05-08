@@ -11,15 +11,6 @@ from narwal.things import *
 
 from .common import TEST_AGENT
 
-'''
-TYPES = {
-    '1': 'comment',
-    '2': 'account',
-    '3': 'link',
-    '4': 'message',
-    '5': 'subreddit',
-}
-'''
 
 class test_identify_thing():
     
@@ -35,6 +26,8 @@ class test_identify_thing():
         ok_(identify_thing({'kind': 't3_a342kj'}) is Link)
         ok_(identify_thing({'kind': 't4'}) is Message)
         ok_(identify_thing({'kind': 't5'}) is Subreddit)
+        ok_(identify_thing({'kind': 't6_adskfj'}) is Link)
+        ok_(identify_thing({'kind': 't7_1'}) is Message)
         ok_(identify_thing({'kind': 'listing'}) is Listing)
         ok_(identify_thing({'kind': 'Userlist'}) is Userlist)
         ok_(identify_thing({'kind': 'moRe'}) is More)
@@ -107,6 +100,8 @@ class test_created():
 
 
 class test_votable():
+    
+    # TODO: test methods?  they're just convenience functions...
     
     def setup(self):
         self.reddit = Reddit(user_agent=TEST_AGENT)
