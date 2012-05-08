@@ -2,7 +2,7 @@
 
 from .const import MAX_REPRSTR
 from .util import limstr, kind, reddit_url
-from .exceptions import NoMoreError, UnsupportedError
+from .exceptions import NoMoreError, UnexpectedResponse
 
 
 def identify_thing(dict_):
@@ -212,6 +212,7 @@ class Reportable(Thing):
         """Reports this thing (POST).  Calls :meth:`narwal.Reddit.report`.
         """
         return self._reddit.report(self.name)
+
 
 class Listing(ListBlob):
     """A reddit :class:`Listing`.  See https://github.com/reddit/reddit/wiki/thing for more details.
@@ -478,26 +479,40 @@ class Subreddit(Thing):
     
     def moderators(self, limit=None):
         """GETs moderators for this subreddit.  Calls :meth:`narwal.Reddit.moderators`.
+        
+        :param limit: max number of items to return
         """
         return self._reddit.moderators(self.display_name, limit=limit)
     
-    def flair(self, user, text, css_class):
+    def flair(self, name, text, css_class):
         """Sets flair for `user` in this subreddit (POST).  Calls :meth:`narwal.Reddit.flairlist`.
+        
+        :param name: name of the user
+        :param text: flair text to assign
+        :param css_class: CSS class to assign to flair text
         """
-        return self._reddit.flair(self.display_name, user, text, css_class)
+        return self._reddit.flair(self.display_name, name, text, css_class)
     
     def flairlist(self, limit=1000, after=None, before=None):
         """GETs flairlist for this subreddit.  Calls :meth:`narwal.Reddit.flairlist`.
+        
+        :param limit: max number of items to return
+        :param after: full id of user to return entries after
+        :param before: full id of user to return entries *before*
         """
         return self._reddit.flairlist(self.display_name, limit=limit, after=after, before=before)
     
     def flaircsv(self, flair_csv):
         """Bulk sets flair for users in this subreddit (POST).  Calls :meth:`narwal.Reddit.flaircsv`.
+        
+        :param flair_csv: CSV string
         """
         return self._reddit.flaircsv(self.display_name, flair_csv)
     
     def contributors(self, limit=None):
         """GETs contributors for this subreddit.  Calls :meth:`narwal.Reddit.contributors`.
+        
+        :param limit: max number of items to return
         """
         return self._reddit.contributors(self.display_name, limit=limit)
 
@@ -536,7 +551,7 @@ class Message(Created, Hideable, Reportable):
         return self._reddit.unread_message(self.name)
     
     def reply(self, text):
-        """POSTs reply to message with own message.
+        """POSTs reply to message with own message.  Returns posted message.
         
         URL: ``http://www.reddit.com/api/comment/``
         
@@ -547,7 +562,11 @@ class Message(Created, Hideable, Reportable):
             'id': '#commentreply_{0}'.format(self.name),
             'text': text,
         }
-        return self._reddit.post('api', 'comment', data=data)
+        j = self._reddit.post('api', 'comment', data=data)
+        try:
+            return self._reddit._thingify(j['json']['data']['things'][0], path=self._path)
+        except Exception:
+            raise UnexpectedResponse(j)
     
     def refresh(self):
         """Re-GETs this message (does not alter the object).  Returns :class:`Message` object.
@@ -576,9 +595,9 @@ class Account(Thing):
         return unicode(self.name)
     
     def overview(self, limit=None):
-        """GETs overview of user's activities.  Returns :class:`Listing`.
+        """GETs overview of user's activities.  Calls :meth:`narwal.Reddit.user_overview`.
         
-        URL: http://www.reddit.com/user/<self.name>/overview/
+        :param limit: max number of items to get
         """
         return self._reddit.user_overview(self.name, limit=limit)
     
@@ -590,11 +609,11 @@ class Account(Thing):
         return self._reddit.user_comments(self.name, limit=limit)
     
     def submitted(self, limit=None):
-        """GETs user's submissions.  Calls :meth:`narwal.Reddit.user_comments`.
+        """GETs user's submissions.  Calls :meth:`narwal.Reddit.user_submitted`.
         
         :param limit: max number of submissions to get
         """
-        return self._reddit._limit_get('user', self.name, 'submitted', limit=limit)
+        return self._reddit.user_submitted(self.name, limit=limit)
     
     def about(self):
         """GETs this user (again).  Calls :meth:`narwal.Reddit.user`.
