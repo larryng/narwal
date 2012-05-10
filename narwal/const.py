@@ -2,7 +2,7 @@
 
 import re
 
-__version__ = '0.3.0b'
+__version__ = '0.3.1b'
 
 API_PERIOD = 2.0
 BASE_URL = 'http://www.reddit.com'
