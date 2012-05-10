@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'narwal'))
+from const import __version__
+sys.path.pop()
+
 from setuptools import setup
-from narwal import __version__
+
 
 setup(
     name='narwal',
