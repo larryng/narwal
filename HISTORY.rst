@@ -3,6 +3,11 @@
 Changelog
 ---------
 
+v0.3.1b (2012-05-10)
+++++++++++++++++++++
+* fixed ImportError during installation
+
+
 v0.3.0b (2012-05-07)
 ++++++++++++++++++++
 * added api_type='json' to all POST data
