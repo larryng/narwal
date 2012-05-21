@@ -30,7 +30,9 @@ class ListBlob(Blob):
     :type reddit: :class:`Reddit`
     :param items: initial list to absorb
     """
-    def __init__(self, reddit, items=list()):
+    def __init__(self, reddit, items=None):
+        if items is None:
+            items = list()
         super(ListBlob, self).__init__(reddit)
         self._items = items
     
