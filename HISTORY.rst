@@ -3,6 +3,11 @@
 Changelog
 ---------
 
+v0.3.2b (2012-05-21)
+++++++++++++++++++++
+* replaced mutable default argument list() in ListBlob with the proper idiom
+
+
 v0.3.1b (2012-05-10)
 ++++++++++++++++++++
 * fixed ImportError during installation
